@@ -1,0 +1,136 @@
+
+.depenses {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+.filters {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  select {
+    padding: 1rem 1.5rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 1rem;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #c2185b;
+      box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+    }
+  }
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: #f0f0f0;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #666;
+}
+
+.badge-recurring {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #a5d6a7, #c8e6c9);
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #2e7d32;
+}
+
+@media (max-width: 768px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+/*
+     TABLEAU DES VENTES
+   */
+.depenses-table {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th {
+      text-align: left;
+      padding: 1rem;
+      border-bottom: 2px solid #f0f0f0;
+      color: #666;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid #f0f0f0;
+      color: #333;
+
+      &.bold {
+        font-weight: 600;
+        color: #c2185b;
+      }
+
+      &.text-right {
+        text-align: right;
+      }
+    }
+
+    tbody tr {
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: #fafafa;
+      }
+    }
+
+    .total-row {
+      background: #f8f9fa;
+      font-weight: 600;
+
+      td {
+        border-bottom: none;
+        padding: 1.25rem 1rem;
+      }
+    }
+  }
+}
+@media (max-width: 768px) {
+  .depenses {
+    padding: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+
+  .depenses-table {
+    overflow-x: auto;
+
+    table {
+      min-width: 800px;
+    }
+  }
+}

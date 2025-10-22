@@ -1,0 +1,152 @@
+@import '../../../styles/shared.scss';
+
+.achats {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-header {
+  display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #ffb6d9;
+    padding: 1.5rem 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 10px rgba(255, 118, 173, 0.2);
+    margin-bottom: 2rem;
+
+  h1 {
+    margin: 0;
+    color: #c2185b;
+    font-size: 2rem;
+    font-weight: 600;
+  }
+}
+
+.filters {
+  margin-bottom: 1.5rem;
+
+  input[type="text"] {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #c2185b;
+      box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+    }
+  }
+}
+
+.achats-table {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th {
+      text-align: left;
+      padding: 1rem;
+      border-bottom: 2px solid #f0f0f0;
+      color: #666;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid #f0f0f0;
+      color: #333;
+
+      &.bold {
+        font-weight: 600;
+        color: #c2185b;
+      }
+
+      &.text-right {
+        text-align: right;
+      }
+    }
+
+    tbody tr {
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: #fafafa;
+      }
+    }
+
+    .total-row {
+      background: #f8f9fa;
+      font-weight: 600;
+
+      td {
+        border-bottom: none;
+        padding: 1.25rem 1rem;
+      }
+    }
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f0f0f0;
+    transform: scale(1.1);
+  }
+
+  &.btn-delete:hover {
+    background: #ffebee;
+  }
+
+  &.btn-edit:hover {
+    background: #e3f2fd;
+  }
+}
+
+@media (max-width: 768px) {
+  .achats {
+    padding: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+
+  .achats-table {
+    overflow-x: auto;
+
+    table {
+      min-width: 800px;
+    }
+  }
+}

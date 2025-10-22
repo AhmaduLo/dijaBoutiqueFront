@@ -1,0 +1,107 @@
+.metric-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  &__icon {
+    font-size: 2.5rem;
+    line-height: 1;
+    padding: 0.75rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__content {
+    flex: 1;
+  }
+
+  &__title {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  &__value {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #999;
+  }
+
+  // Variantes de couleurs
+  &--pink {
+    .metric-card__icon {
+      background: linear-gradient(135deg, #f8b4d9, #fce4ec);
+      color: #c2185b;
+    }
+    .metric-card__value {
+      color: #c2185b;
+    }
+  }
+
+  &--green {
+    .metric-card__icon {
+      background: linear-gradient(135deg, #a5d6a7, #c8e6c9);
+      color: #2e7d32;
+    }
+    .metric-card__value {
+      color: #2e7d32;
+    }
+  }
+
+  &--orange {
+    .metric-card__icon {
+      background: linear-gradient(135deg, #ffcc80, #ffe0b2);
+      color: #e65100;
+    }
+    .metric-card__value {
+      color: #e65100;
+    }
+  }
+
+  &--purple {
+    .metric-card__icon {
+      background: linear-gradient(135deg, #ce93d8, #e1bee7);
+      color: #6a1b9a;
+    }
+    .metric-card__value {
+      color: #6a1b9a;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .metric-card {
+    padding: 1rem;
+
+    &__icon {
+      font-size: 2rem;
+      padding: 0.5rem;
+    }
+
+    &__value {
+      font-size: 1.5rem;
+    }
+  }
+}
