@@ -44,6 +44,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/rapports/rapports.component').then(m => m.RapportsComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'stock',
+    loadComponent: () => import('./features/stock/stock-dashboard.component').then(m => m.StockDashboardComponent),
+    canActivate: [authGuard]
+  },
   // Redirection par défaut
   {
     path: '**',

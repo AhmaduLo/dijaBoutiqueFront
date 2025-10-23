@@ -35,6 +35,10 @@ import { User } from '../../../core/models/auth.model';
             <span class="icon">💳</span>
             Dépenses
           </a>
+          <a routerLink="/stock" routerLinkActive="active">
+            <span class="icon">📦</span>
+            Stock
+          </a>
           <a routerLink="/rapports" routerLinkActive="active">
             <span class="icon">📈</span>
             Rapports
