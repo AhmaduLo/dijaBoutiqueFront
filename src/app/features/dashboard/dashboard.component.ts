@@ -143,7 +143,7 @@ export class DashboardComponent implements OnInit {
   // Dates
   dateDebut = '';
   dateFin = '';
-  selectedPeriod = 'current-month';
+  selectedPeriod = 'current-year'; // Changé de 'current-month' à 'current-year'
   customDateDebut = '';
   customDateFin = '';
 
@@ -215,6 +215,8 @@ export class DashboardComponent implements OnInit {
 
     this.isLoading = true;
 
+    console.log('📅 Période sélectionnée:', this.dateDebut, 'au', this.dateFin);
+
     forkJoin({
       achats: this.achatService.getStatistiques(this.dateDebut, this.dateFin),
       ventes: this.venteService.getStatistiques(this.dateDebut, this.dateFin),
@@ -222,11 +224,20 @@ export class DashboardComponent implements OnInit {
       statsDepenses: this.depenseService.getStatistiques(this.dateDebut, this.dateFin)
     }).subscribe({
       next: (data) => {
+        console.log('📊 Données reçues du backend:', data);
+
         // Métriques principales
-        this.totalAchats = data.achats.totalAchats || 0;
+        this.totalAchats = data.achats.montantTotal || data.achats.totalAchats || 0;
         this.chiffreAffaires = data.ventes.chiffreAffaires || 0;
         this.totalDepenses = data.depenses || 0;
         this.beneficeNet = this.chiffreAffaires - this.totalAchats - this.totalDepenses;
+
+        console.log('💰 Totaux calculés:', {
+          achats: this.totalAchats,
+          ventes: this.chiffreAffaires,
+          depenses: this.totalDepenses,
+          benefice: this.beneficeNet
+        });
 
         // Calcul de la marge brute (en %)
         if (this.chiffreAffaires > 0) {
@@ -240,10 +251,22 @@ export class DashboardComponent implements OnInit {
         this.nombreVentes = data.ventes.nombreVentes || 0;
         this.nombreDepenses = data.statsDepenses.nombreDepenses || 0;
 
+        console.log('🔢 Nombre de transactions:', {
+          achats: this.nombreAchats,
+          ventes: this.nombreVentes,
+          depenses: this.nombreDepenses
+        });
+
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Erreur lors du chargement des métriques:', error);
+        console.error('❌ Erreur lors du chargement des métriques:', error);
+        console.error('Détails de l\'erreur:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          url: error.url
+        });
         this.notificationService.error('Erreur lors du chargement des données du tableau de bord');
         this.isLoading = false;
       }

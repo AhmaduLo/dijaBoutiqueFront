@@ -15,9 +15,13 @@ export interface Achat {
  * Statistiques des achats sur une période donnée
  */
 export interface StatistiquesAchats {
-  totalAchats: number;
+  montantTotal: number; // Nom utilisé par le backend
+  totalAchats?: number; // Alias optionnel pour compatibilité
   nombreAchats: number;
-  montantMoyen: number;
-  periodeDebut: string;
-  periodeFin: string;
+  montantMoyen?: number;
+  dateDebut: string;
+  dateFin: string;
+  periodeDebut?: string; // Alias optionnel
+  periodeFin?: string; // Alias optionnel
+  achats?: Achat[]; // Liste des achats de la période
 }

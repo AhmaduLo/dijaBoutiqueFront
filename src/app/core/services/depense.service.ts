@@ -46,23 +46,27 @@ export class DepenseService {
   }
 
   /**
-   * Récupère le total des dépenses sur une période
+   * Récupère le total des dépenses sur une période pour l'utilisateur connecté
    */
   getTotal(dateDebut: string, dateFin: string): Observable<number> {
+    const userId = this.authService.getCurrentUserId();
     const params = new HttpParams()
       .set('debut', dateDebut)
-      .set('fin', dateFin);
+      .set('fin', dateFin)
+      .set('utilisateurId', userId.toString());
 
     return this.http.get<number>(`${this.API_URL}/total`, { params });
   }
 
   /**
-   * Récupère les statistiques sur une période
+   * Récupère les statistiques sur une période pour l'utilisateur connecté
    */
   getStatistiques(dateDebut: string, dateFin: string): Observable<StatistiquesDepenses> {
+    const userId = this.authService.getCurrentUserId();
     const params = new HttpParams()
       .set('debut', dateDebut)
-      .set('fin', dateFin);
+      .set('fin', dateFin)
+      .set('utilisateurId', userId.toString());
 
     return this.http.get<StatistiquesDepenses>(`${this.API_URL}/statistiques`, { params });
   }

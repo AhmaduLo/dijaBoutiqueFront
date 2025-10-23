@@ -39,12 +39,14 @@ export class AchatService {
   }
 
   /**
-   * Récupère les statistiques sur une période
+   * Récupère les statistiques sur une période pour l'utilisateur connecté
    */
   getStatistiques(dateDebut: string, dateFin: string): Observable<StatistiquesAchats> {
+    const userId = this.authService.getCurrentUserId();
     const params = new HttpParams()
       .set('debut', dateDebut)
-      .set('fin', dateFin);
+      .set('fin', dateFin)
+      .set('utilisateurId', userId.toString());
 
     return this.http.get<StatistiquesAchats>(`${this.API_URL}/statistiques`, { params });
   }
