@@ -91,6 +91,7 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
               <th>Quantité</th>
               <th>Prix unitaire</th>
               <th>Prix total</th>
+              <th>Créé par</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -102,6 +103,7 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
               <td>{{ vente.quantite }}</td>
               <td>{{ vente.prixUnitaire | currencyEur }}</td>
               <td class="bold">{{ vente.prixTotal | currencyEur }}</td>
+              <td>{{ vente.utilisateur?.prenom || 'N/A' }}</td>
               <td>
                 <div class="actions">
                   <button class="btn-icon btn-edit" (click)="editVente(vente)" title="Modifier">✏️</button>
@@ -112,7 +114,7 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
           </tbody>
           <tfoot>
             <tr class="total-row">
-              <td colspan="5" class="text-right"><strong>Total :</strong></td>
+              <td colspan="6" class="text-right"><strong>Total :</strong></td>
               <td class="bold">{{ calculateTotal() | currencyEur }}</td>
               <td></td>
             </tr>
@@ -163,7 +165,7 @@ export class VentesComponent implements OnInit {
 
   loadVentes(): void {
     this.isLoading = true;
-    this.venteService.getByUtilisateur().subscribe({
+    this.venteService.getAll().subscribe({
       next: (ventes) => {
         this.ventes = ventes.sort((a, b) =>
           new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime()

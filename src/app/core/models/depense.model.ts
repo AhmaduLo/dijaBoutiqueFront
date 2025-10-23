@@ -29,6 +29,11 @@ export interface Depense {
   categorie: CategorieDepense;
   estRecurrente: boolean;
   notes?: string;
+  utilisateur?: {
+    id: number;
+    prenom: string;
+    nom: string;
+  };
 }
 
 /**

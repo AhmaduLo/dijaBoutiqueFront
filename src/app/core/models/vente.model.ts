@@ -9,6 +9,11 @@ export interface Vente {
   prixTotal: number;
   dateVente: string; // Format: YYYY-MM-DD
   client: string;
+  utilisateur?: {
+    id: number;
+    prenom: string;
+    nom: string;
+  };
 }
 
 /**

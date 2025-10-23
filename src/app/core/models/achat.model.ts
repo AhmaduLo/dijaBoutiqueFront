@@ -9,6 +9,11 @@ export interface Achat {
   prixTotal: number;
   dateAchat: string; // Format: YYYY-MM-DD
   fournisseur: string;
+  utilisateur?: {
+    id: number;
+    prenom: string;
+    nom: string;
+  };
 }
 
 /**

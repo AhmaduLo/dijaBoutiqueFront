@@ -37,6 +37,7 @@ export class AchatService {
     const userId = this.authService.getCurrentUserId();
     return this.http.get<Achat[]>(`${this.API_URL}/utilisateur/${userId}`);
   }
+  
 
   /**
    * Récupère les statistiques sur une période pour l'utilisateur connecté

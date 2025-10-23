@@ -90,6 +90,7 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
               <th>Catégorie</th>
               <th>Montant</th>
               <th>Récurrente</th>
+              <th>Créé par</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -103,6 +104,7 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
                 <span class="badge-recurring" *ngIf="depense.estRecurrente">🔁 Oui</span>
                 <span *ngIf="!depense.estRecurrente">-</span>
               </td>
+              <td>{{ depense.utilisateur?.prenom || 'N/A' }}</td>
               <td>
                 <div class="actions">
                   <button class="btn-icon btn-edit" (click)="editDepense(depense)" title="Modifier">✏️</button>
@@ -113,7 +115,7 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
           </tbody>
           <tfoot>
             <tr class="total-row">
-              <td colspan="3" class="text-right"><strong>Total :</strong></td>
+              <td colspan="4" class="text-right"><strong>Total :</strong></td>
               <td class="bold">{{ calculateTotal() | currencyEur }}</td>
               <td colspan="2"></td>
             </tr>
@@ -165,7 +167,7 @@ export class DepensesComponent implements OnInit {
 
   loadDepenses(): void {
     this.isLoading = true;
-    this.depenseService.getByUtilisateur().subscribe({
+    this.depenseService.getAll().subscribe({
       next: (depenses) => {
         this.depenses = depenses.sort((a, b) =>
           new Date(b.dateDepense).getTime() - new Date(a.dateDepense).getTime()
