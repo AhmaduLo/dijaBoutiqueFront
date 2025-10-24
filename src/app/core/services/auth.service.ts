@@ -51,6 +51,14 @@ export class AuthService {
   }
 
   /**
+   * Vérifie si l'utilisateur courant est un ADMIN
+   */
+  isAdmin(): boolean {
+    const user = this.getCurrentUser();
+    return user?.role === 'ADMIN';
+  }
+
+  /**
    * Inscription d'un nouvel utilisateur
    */
   register(data: RegisterRequest): Observable<AuthResponse> {

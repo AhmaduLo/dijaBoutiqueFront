@@ -45,10 +45,20 @@ import { User } from '../../../core/models/auth.model';
           </a>
         </nav>
         <div class="user-info" *ngIf="isAuthenticated && currentUser">
-          <span class="user-name">👤 {{ currentUser.prenom }} {{ currentUser.nom }}</span>
-          <button class="btn-logout" (click)="logout()" title="Se déconnecter">
-            🚪 Déconnexion
-          </button>
+          <div class="user-menu" (click)="toggleUserMenu()">
+            <span class="user-name">👤 {{ currentUser.prenom }} {{ currentUser.nom }}</span>
+            <span class="dropdown-arrow">▼</span>
+          </div>
+          <div class="user-dropdown" *ngIf="showUserMenu">
+            <a routerLink="/admin" *ngIf="isAdmin()" (click)="closeUserMenu()">
+              <span class="icon">👑</span>
+              Administration
+            </a>
+            <button class="dropdown-item" (click)="logout()">
+              <span class="icon">🚪</span>
+              Déconnexion
+            </button>
+          </div>
         </div>
         <div class="auth-links" *ngIf="!isAuthenticated">
           <a routerLink="/login" class="btn-link">Connexion</a>
@@ -62,6 +72,7 @@ import { User } from '../../../core/models/auth.model';
 export class HeaderComponent implements OnInit {
   isAuthenticated = false;
   currentUser: User | null = null;
+  showUserMenu = false;
 
   constructor(
     private authService: AuthService,
@@ -76,7 +87,20 @@ export class HeaderComponent implements OnInit {
     });
   }
 
+  toggleUserMenu(): void {
+    this.showUserMenu = !this.showUserMenu;
+  }
+
+  closeUserMenu(): void {
+    this.showUserMenu = false;
+  }
+
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
   logout(): void {
+    this.closeUserMenu();
     if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
       this.authService.logout();
       this.router.navigate(['/login']);

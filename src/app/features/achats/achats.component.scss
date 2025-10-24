@@ -23,6 +23,55 @@
       line-height: 1.5;
     }
   }
+
+  .currency-badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: #f3f4f6;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #c2185b;
+  }
+
+  .currency-badge-small {
+    display: inline-block;
+    margin-left: 0.25rem;
+    padding: 0.15rem 0.5rem;
+    background: #fef3c7;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #c2185b;
+  }
+
+  .total-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    input {
+      flex: 1;
+    }
+  }
+
+  .currency-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: white;
+    cursor: pointer;
+
+    &:focus {
+      outline: none;
+      border-color: #c2185b;
+      box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+    }
+  }
 }
 
 .page-header {

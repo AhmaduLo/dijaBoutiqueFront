@@ -7,6 +7,8 @@ import { AchatService } from '../../core/services/achat.service';
 import { VenteService } from '../../core/services/vente.service';
 import { DepenseService } from '../../core/services/depense.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { CurrencyService } from '../../core/services/currency.service';
+import { Currency } from '../../core/models/currency.model';
 
 /**
  * Composant Dashboard - Vue d'ensemble des métriques de l'activité
@@ -21,6 +23,10 @@ import { NotificationService } from '../../core/services/notification.service';
         <div>
           <h1>Tableau de bord</h1>
           <p class="subtitle">Vue d'ensemble de votre activité</p>
+          <div class="currency-info" *ngIf="defaultCurrency">
+            <span class="currency-icon">💰</span>
+            <span>Devise: <strong>{{ defaultCurrency.nom }} ({{ defaultCurrency.symbole }})</strong></span>
+          </div>
         </div>
         <div class="period-selector">
           <label>Période :</label>
@@ -46,7 +52,7 @@ import { NotificationService } from '../../core/services/notification.service';
 
       <div class="metrics-grid" *ngIf="!isLoading">
         <app-metric-card
-          title="Total Achats"
+          [title]="'Total Achats (' + (defaultCurrency?.symbole || 'CFA') + ')'"
           [value]="totalAchats"
           icon="🛒"
           color="pink"
@@ -54,7 +60,7 @@ import { NotificationService } from '../../core/services/notification.service';
         ></app-metric-card>
 
         <app-metric-card
-          title="Chiffre d'Affaires"
+          [title]='"Chiffre d\'Affaires (" + (defaultCurrency?.symbole || "CFA") + ")"'
           [value]="chiffreAffaires"
           icon="💰"
           color="green"
@@ -62,7 +68,7 @@ import { NotificationService } from '../../core/services/notification.service';
         ></app-metric-card>
 
         <app-metric-card
-          title="Total Dépenses"
+          [title]="'Total Dépenses (' + (defaultCurrency?.symbole || 'CFA') + ')'"
           [value]="totalDepenses"
           icon="💳"
           color="orange"
@@ -70,7 +76,7 @@ import { NotificationService } from '../../core/services/notification.service';
         ></app-metric-card>
 
         <app-metric-card
-          title="Bénéfice Net"
+          [title]="'Bénéfice Net (' + (defaultCurrency?.symbole || 'CFA') + ')'"
           [value]="beneficeNet"
           icon="📊"
           [color]="beneficeNet >= 0 ? 'purple' : 'orange'"
@@ -147,18 +153,48 @@ export class DashboardComponent implements OnInit {
   customDateDebut = '';
   customDateFin = '';
 
+  // Devise
+  defaultCurrency?: Currency;
+
   isLoading = true;
 
   constructor(
     private achatService: AchatService,
     private venteService: VenteService,
     private depenseService: DepenseService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private currencyService: CurrencyService
   ) {}
 
   ngOnInit(): void {
+    this.loadDefaultCurrency();
     this.initializeDates();
     this.loadMetrics();
+  }
+
+  /**
+   * Charge la devise par défaut
+   */
+  loadDefaultCurrency(): void {
+    this.currencyService.getAllCurrencies().subscribe({
+      next: (currencies) => {
+        this.defaultCurrency = currencies.find(c => c.isDefault);
+        if (!this.defaultCurrency && currencies.length > 0) {
+          this.defaultCurrency = currencies[0];
+        }
+      },
+      error: (error) => {
+        console.warn('Impossible de charger les devises, utilisation de CFA par défaut', error);
+        // Fallback vers CFA
+        this.defaultCurrency = {
+          code: 'XOF',
+          nom: 'Franc CFA',
+          symbole: 'CFA',
+          pays: 'Sénégal',
+          isDefault: true
+        };
+      }
+    });
   }
 
   /**

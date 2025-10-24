@@ -29,6 +29,9 @@ export interface Depense {
   categorie: CategorieDepense;
   estRecurrente: boolean;
   notes?: string;
+  deviseId?: number; // ID de la devise utilisée
+  deviseCode?: string; // Code de la devise (XOF, EUR, USD...)
+  deviseSymbole?: string; // Symbole de la devise (CFA, €, $...)
   utilisateur?: {
     id: number;
     prenom: string;

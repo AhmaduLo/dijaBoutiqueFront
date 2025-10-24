@@ -1,0 +1,367 @@
+<div class="admin-dashboard">
+  <!-- En-tête avec titre et bouton -->
+  <div class="page-header">
+    <h1>👑 Administration</h1>
+    <button class="btn btn-primary" *ngIf="activeTab === 'users'" (click)="openForm()">+ Créer un utilisateur</button>
+    <button class="btn btn-primary" *ngIf="activeTab === 'currencies'" (click)="openCurrencyForm()">+ Ajouter une devise</button>
+  </div>
+
+  <!-- Onglets de navigation -->
+  <div class="tabs">
+    <button
+      class="tab"
+      [class.active]="activeTab === 'users'"
+      (click)="switchTab('users')">
+      👥 Utilisateurs
+    </button>
+    <button
+      class="tab"
+      [class.active]="activeTab === 'currencies'"
+      (click)="switchTab('currencies')">
+      💰 Devises
+    </button>
+  </div>
+
+  <!-- SECTION UTILISATEURS -->
+  <div *ngIf="activeTab === 'users'">
+    <!-- Cartes de statistiques -->
+  <div class="stats-cards" *ngIf="statistiques">
+    <div class="card">
+      <div class="card-icon">👥</div>
+      <div class="card-content">
+        <h3>Total Utilisateurs</h3>
+        <p class="card-value">{{ statistiques.nombreTotal }}</p>
+      </div>
+    </div>
+    <div class="card card-admin">
+      <div class="card-icon">👑</div>
+      <div class="card-content">
+        <h3>Administrateurs</h3>
+        <p class="card-value">{{ statistiques.nombreAdmins }}</p>
+      </div>
+    </div>
+    <div class="card card-user">
+      <div class="card-icon">👤</div>
+      <div class="card-content">
+        <h3>Employés</h3>
+        <p class="card-value">{{ statistiques.nombreUsers }}</p>
+      </div>
+    </div>
+    <div class="card card-new">
+      <div class="card-icon">✨</div>
+      <div class="card-content">
+        <h3>Nouveaux (7j)</h3>
+        <p class="card-value">{{ statistiques.nouveauxUtilisateurs7Jours }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire modal -->
+  <div class="modal" *ngIf="showForm" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditing ? 'Modifier' : 'Créer' }} un utilisateur</h2>
+        <button class="close-btn" (click)="closeForm()">×</button>
+      </div>
+      <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nom *</label>
+            <input type="text" formControlName="nom" placeholder="Ex: Diop" />
+            <div class="error" *ngIf="userForm.get('nom')?.invalid && userForm.get('nom')?.touched">
+              Le nom est requis
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Prénom *</label>
+            <input type="text" formControlName="prenom" placeholder="Ex: Mamadou" />
+            <div class="error" *ngIf="userForm.get('prenom')?.invalid && userForm.get('prenom')?.touched">
+              Le prénom est requis
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" formControlName="email" placeholder="Ex: mamadou@dijaboutique.com" />
+          <div class="error" *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched">
+            Email valide requis
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Mot de passe {{ isEditing ? '(laisser vide si inchangé)' : '*' }}</label>
+          <div class="password-input">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="motDePasse"
+              placeholder="Minimum 6 caractères" />
+            <button type="button" class="btn-icon" (click)="showPassword = !showPassword" title="Afficher/Masquer">
+              {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+            </button>
+            <button type="button" class="btn btn-secondary" (click)="generatePassword()" title="Générer un mot de passe">
+              🎲 Générer
+            </button>
+          </div>
+          <div class="error" *ngIf="userForm.get('motDePasse')?.invalid && userForm.get('motDePasse')?.touched">
+            Mot de passe requis (min. 6 caractères)
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Rôle *</label>
+          <select formControlName="role">
+            <option [value]="userRoles.USER">👤 Employé</option>
+            <option [value]="userRoles.ADMIN">👑 Administrateur</option>
+          </select>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="userForm.invalid || isSubmitting">
+            {{ isSubmitting ? 'Enregistrement...' : (isEditing ? 'Modifier' : 'Créer') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Filtres de recherche -->
+  <div class="filters">
+    <input
+      type="text"
+      placeholder="🔍 Rechercher par nom, prénom ou email..."
+      [(ngModel)]="searchTerm"
+      (input)="filterUtilisateurs()"
+      [ngModelOptions]="{standalone: true}" />
+    <select [(ngModel)]="selectedRole" (change)="filterUtilisateurs()" [ngModelOptions]="{standalone: true}">
+      <option value="">Tous les rôles</option>
+      <option [value]="userRoles.ADMIN">👑 Administrateurs</option>
+      <option [value]="userRoles.USER">👤 Employés</option>
+    </select>
+  </div>
+
+  <!-- Chargement -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Chargement des utilisateurs...</p>
+  </div>
+
+  <!-- Tableau des utilisateurs -->
+  <div class="users-table" *ngIf="!isLoading">
+    <table *ngIf="filteredUtilisateurs.length > 0">
+      <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Email</th>
+          <th>Rôle</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUtilisateurs">
+          <td>
+            <div class="user-cell">
+              <strong>{{ user.prenom }} {{ user.nom }}</strong>
+              <span class="badge-you" *ngIf="user.id === currentUser?.id">Vous</span>
+            </div>
+          </td>
+          <td>{{ user.email }}</td>
+          <td>
+            <span class="role-badge" [style.background-color]="getRoleColor(user.role)">
+              {{ getRoleIcon(user.role) }} {{ getRoleLabel(user.role) }}
+            </span>
+          </td>
+          <td>
+            <div class="actions">
+              <button
+                class="btn-icon"
+                (click)="changeRole(user)"
+                title="Changer le rôle"
+                [disabled]="user.id === currentUser?.id">
+                🔄
+              </button>
+              <button class="btn-icon" (click)="editUser(user)" title="Modifier">✏️</button>
+              <button
+                class="btn-icon btn-delete"
+                (click)="deleteUser(user)"
+                [disabled]="user.id === currentUser?.id"
+                title="Supprimer">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="empty-state" *ngIf="filteredUtilisateurs.length === 0">
+      <div class="empty-icon">👥</div>
+      <h3>Aucun utilisateur trouvé</h3>
+      <p *ngIf="searchTerm || selectedRole">Essayez de modifier vos filtres</p>
+      <p *ngIf="!searchTerm && !selectedRole">Créez votre premier utilisateur</p>
+      <button class="btn btn-primary" (click)="openForm()">+ Créer un utilisateur</button>
+    </div>
+  </div>
+  </div>
+  <!-- FIN SECTION UTILISATEURS -->
+
+  <!-- SECTION DEVISES -->
+  <div *ngIf="activeTab === 'currencies'">
+    <!-- Formulaire modal des devises -->
+    <div class="modal" *ngIf="showCurrencyForm" (click)="closeCurrencyForm()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ isEditingCurrency ? 'Modifier' : 'Ajouter' }} une devise</h2>
+          <button class="close-btn" (click)="closeCurrencyForm()">×</button>
+        </div>
+        <form [formGroup]="currencyForm" (ngSubmit)="onSubmitCurrency()">
+          <!-- Devises prédéfinies -->
+          <div class="predefined-currencies" *ngIf="!isEditingCurrency">
+            <label>Devises courantes :</label>
+            <div class="currency-buttons">
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm"
+                *ngFor="let devise of devisesCommunes"
+                (click)="addPredefinedCurrency(devise)">
+                {{ devise.symbole }} {{ devise.code }} - {{ devise.pays }}
+              </button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Code devise * (ex: USD, EUR, XOF)</label>
+              <input type="text" formControlName="code" placeholder="Ex: XOF" style="text-transform: uppercase" />
+              <div class="error" *ngIf="currencyForm.get('code')?.invalid && currencyForm.get('code')?.touched">
+                Le code est requis
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Symbole * (ex: $, €, CFA)</label>
+              <input type="text" formControlName="symbole" placeholder="Ex: CFA" />
+              <div class="error" *ngIf="currencyForm.get('symbole')?.invalid && currencyForm.get('symbole')?.touched">
+                Le symbole est requis
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Nom complet *</label>
+            <input type="text" formControlName="nom" placeholder="Ex: Franc CFA" />
+            <div class="error" *ngIf="currencyForm.get('nom')?.invalid && currencyForm.get('nom')?.touched">
+              Le nom est requis
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Pays *</label>
+            <input type="text" formControlName="pays" placeholder="Ex: Sénégal" />
+            <div class="error" *ngIf="currencyForm.get('pays')?.invalid && currencyForm.get('pays')?.touched">
+              Le pays est requis
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Taux de change * (par rapport à la devise de référence)</label>
+            <input type="number" step="0.001" formControlName="tauxChange" placeholder="Ex: 1" />
+            <div class="error" *ngIf="currencyForm.get('tauxChange')?.invalid && currencyForm.get('tauxChange')?.touched">
+              Le taux de change est requis
+            </div>
+            <small class="info-text">1 unité de devise de référence = X unités de cette devise</small>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="isDefault" />
+              Définir comme devise par défaut du système
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeCurrencyForm()">Annuler</button>
+            <button type="submit" class="btn btn-primary" [disabled]="currencyForm.invalid || isSubmitting">
+              {{ isSubmitting ? 'Enregistrement...' : (isEditingCurrency ? 'Modifier' : 'Ajouter') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Filtres de recherche des devises -->
+    <div class="filters">
+      <input
+        type="text"
+        placeholder="🔍 Rechercher par code, nom, pays ou symbole..."
+        [(ngModel)]="searchCurrency"
+        (input)="filterCurrencies()"
+        [ngModelOptions]="{standalone: true}" />
+    </div>
+
+    <!-- Chargement -->
+    <div class="loading" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Chargement des devises...</p>
+    </div>
+
+    <!-- Tableau des devises -->
+    <div class="currencies-table" *ngIf="!isLoading">
+      <table *ngIf="filteredCurrencies.length > 0">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Nom</th>
+            <th>Symbole</th>
+            <th>Pays</th>
+            <th>Taux de change</th>
+            <th>Par défaut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let currency of filteredCurrencies" [class.default-row]="currency.isDefault">
+            <td><strong>{{ currency.code }}</strong></td>
+            <td>{{ currency.nom }}</td>
+            <td><span class="currency-symbol">{{ currency.symbole }}</span></td>
+            <td>{{ currency.pays }}</td>
+            <td>{{ currency.tauxChange || 'N/A' }}</td>
+            <td>
+              <span class="badge" [class.badge-success]="currency.isDefault" [class.badge-secondary]="!currency.isDefault">
+                {{ currency.isDefault ? '✓ Oui' : 'Non' }}
+              </span>
+            </td>
+            <td>
+              <div class="actions">
+                <button
+                  class="btn-icon"
+                  (click)="setDefaultCurrency(currency)"
+                  title="Définir par défaut"
+                  [disabled]="currency.isDefault">
+                  ⭐
+                </button>
+                <button class="btn-icon" (click)="editCurrency(currency)" title="Modifier">✏️</button>
+                <button
+                  class="btn-icon btn-delete"
+                  (click)="deleteCurrency(currency)"
+                  [disabled]="currency.isDefault"
+                  title="Supprimer">
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="filteredCurrencies.length === 0">
+        <div class="empty-icon">💰</div>
+        <h3>Aucune devise trouvée</h3>
+        <p *ngIf="searchCurrency">Essayez de modifier vos filtres</p>
+        <p *ngIf="!searchCurrency">Ajoutez votre première devise</p>
+        <button class="btn btn-primary" (click)="openCurrencyForm()">+ Ajouter une devise</button>
+      </div>
+    </div>
+  </div>
+  <!-- FIN SECTION DEVISES -->
+</div>

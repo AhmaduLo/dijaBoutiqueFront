@@ -9,6 +9,9 @@ export interface Achat {
   prixTotal: number;
   dateAchat: string; // Format: YYYY-MM-DD
   fournisseur: string;
+  deviseId?: number; // ID de la devise utilisée
+  deviseCode?: string; // Code de la devise (XOF, EUR, USD...)
+  deviseSymbole?: string; // Symbole de la devise (CFA, €, $...)
   utilisateur?: {
     id: number;
     prenom: string;

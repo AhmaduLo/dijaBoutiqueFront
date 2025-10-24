@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard } from './core/guards/auth.guard';
+import { authGuard, guestGuard, adminGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -48,6 +48,11 @@ export const routes: Routes = [
     path: 'stock',
     loadComponent: () => import('./features/stock/stock-dashboard.component').then(m => m.StockDashboardComponent),
     canActivate: [authGuard]
+  },
+  {
+    path: 'admin',
+    loadComponent: () => import('./features/admin/admin-dashboard.component').then(m => m.AdminDashboardComponent),
+    canActivate: [adminGuard]
   },
   // Redirection par défaut
   {

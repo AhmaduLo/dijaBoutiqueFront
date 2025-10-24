@@ -33,3 +33,19 @@ export const guestGuard = () => {
   router.navigate(['/dashboard']);
   return false;
 };
+
+/**
+ * Guard pour protéger les routes réservées aux ADMIN uniquement
+ */
+export const adminGuard = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.isAuthenticated() && authService.isAdmin()) {
+    return true;
+  }
+
+  // Rediriger vers le dashboard si pas ADMIN
+  router.navigate(['/dashboard']);
+  return false;
+};
