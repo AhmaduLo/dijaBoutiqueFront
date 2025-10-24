@@ -43,6 +43,13 @@ export class StockService {
   }
 
   /**
+   * Récupère la liste des produits disponibles en stock
+   */
+  getProduitsDisponibles(): Observable<StockDto[]> {
+    return this.http.get<StockDto[]>(`${this.API_URL}/produits-disponibles`);
+  }
+
+  /**
    * Retourne le libellé lisible pour un statut
    */
   getStatutLabel(statut: StatutStock): string {

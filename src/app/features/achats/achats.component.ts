@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { Achat } from '../../core/models/achat.model';
 import { AchatService } from '../../core/services/achat.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { StockService } from '../../core/services/stock.service';
+import { StockDto } from '../../core/models/stock.model';
 import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
 
 /**
@@ -34,9 +36,29 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
             <div class="form-row">
               <div class="form-group">
                 <label>Nom du produit *</label>
-                <input type="text" formControlName="nomProduit" placeholder="Ex: Collier doré" />
+                <select formControlName="nomProduit" (change)="onProductChange()">
+                  <option value="">-- Sélectionner un produit --</option>
+                  <option *ngFor="let produit of produitsExistants" [value]="produit.nomProduit">
+                    {{ produit.nomProduit }} (Stock actuel: {{ produit.stockDisponible }})
+                  </option>
+                  <option value="__NOUVEAU__">➕ Nouveau produit...</option>
+                </select>
+                <input
+                  *ngIf="showNewProductInput"
+                  type="text"
+                  formControlName="nouveauProduit"
+                  placeholder="Nom du nouveau produit"
+                  class="mt-2"
+                  (input)="onNewProductInput()"
+                />
                 <div class="error" *ngIf="achatForm.get('nomProduit')?.invalid && achatForm.get('nomProduit')?.touched">
-                  Le nom du produit est requis
+                  {{ showNewProductInput ? 'Veuillez saisir le nom du produit' : 'Veuillez sélectionner un produit' }}
+                </div>
+                <div class="info-stock" *ngIf="selectedProduct">
+                  <small>
+                    📦 Stock actuel: {{ selectedProduct.stockDisponible }} unités |
+                    💰 Prix d'achat moyen: {{ selectedProduct.prixMoyenAchat | currencyEur }}
+                  </small>
                 </div>
               </div>
               <div class="form-group">
@@ -170,6 +192,9 @@ export class AchatsComponent implements OnInit {
   achats: Achat[] = [];
   filteredAchats: Achat[] = [];
   achatForm: FormGroup;
+  produitsExistants: StockDto[] = [];
+  selectedProduct?: StockDto;
+  showNewProductInput = false;
   showForm = false;
   isEditing = false;
   isLoading = true;
@@ -180,10 +205,12 @@ export class AchatsComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private achatService: AchatService,
+    private stockService: StockService,
     private notificationService: NotificationService
   ) {
     this.achatForm = this.fb.group({
       nomProduit: ['', Validators.required],
+      nouveauProduit: [''],
       fournisseur: ['', Validators.required],
       quantite: [1, [Validators.required, Validators.min(1)]],
       prixUnitaire: [0, [Validators.required, Validators.min(0)]],
@@ -194,6 +221,55 @@ export class AchatsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAchats();
+    this.loadProduitsExistants();
+  }
+
+  loadProduitsExistants(): void {
+    this.stockService.getAllStocks().subscribe({
+      next: (produits) => {
+        this.produitsExistants = produits;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des produits:', error);
+      }
+    });
+  }
+
+  onProductChange(): void {
+    const nomProduit = this.achatForm.get('nomProduit')?.value;
+
+    if (nomProduit === '__NOUVEAU__') {
+      this.showNewProductInput = true;
+      this.selectedProduct = undefined;
+      this.achatForm.get('nouveauProduit')?.setValidators([Validators.required]);
+      this.achatForm.get('nouveauProduit')?.updateValueAndValidity();
+    } else {
+      this.showNewProductInput = false;
+      this.achatForm.get('nouveauProduit')?.clearValidators();
+      this.achatForm.get('nouveauProduit')?.updateValueAndValidity();
+
+      if (nomProduit) {
+        this.selectedProduct = this.produitsExistants.find(p => p.nomProduit === nomProduit);
+
+        // Auto-remplir le prix d'achat avec le prix moyen d'achat du stock
+        if (this.selectedProduct && this.selectedProduct.prixMoyenAchat > 0) {
+          this.achatForm.patchValue({
+            prixUnitaire: this.selectedProduct.prixMoyenAchat
+          });
+          this.calculerTotal();
+        }
+      } else {
+        this.selectedProduct = undefined;
+      }
+    }
+  }
+
+  onNewProductInput(): void {
+    const nouveauProduit = this.achatForm.get('nouveauProduit')?.value;
+    if (nouveauProduit && nouveauProduit.trim()) {
+      // Le nom du nouveau produit sera utilisé lors de la soumission
+      this.achatForm.get('nomProduit')?.setErrors(null);
+    }
   }
 
   loadAchats(): void {
@@ -230,7 +306,11 @@ export class AchatsComponent implements OnInit {
   openForm(): void {
     this.showForm = true;
     this.isEditing = false;
+    this.showNewProductInput = false;
+    this.selectedProduct = undefined;
     this.achatForm.reset({
+      nomProduit: '',
+      nouveauProduit: '',
       quantite: 1,
       prixUnitaire: 0,
       dateAchat: new Date().toISOString().split('T')[0],
@@ -242,6 +322,8 @@ export class AchatsComponent implements OnInit {
     this.showForm = false;
     this.isEditing = false;
     this.currentAchatId = undefined;
+    this.showNewProductInput = false;
+    this.selectedProduct = undefined;
     this.achatForm.reset();
   }
 
@@ -268,8 +350,19 @@ export class AchatsComponent implements OnInit {
 
     this.isSubmitting = true;
     const formValue = this.achatForm.getRawValue();
+
+    // Gérer le cas du nouveau produit
+    let nomProduitFinal = formValue.nomProduit;
+    if (formValue.nomProduit === '__NOUVEAU__' && formValue.nouveauProduit) {
+      nomProduitFinal = formValue.nouveauProduit.trim();
+    }
+
     const achat: Achat = {
-      ...formValue,
+      nomProduit: nomProduitFinal,
+      fournisseur: formValue.fournisseur,
+      quantite: formValue.quantite,
+      prixUnitaire: formValue.prixUnitaire,
+      dateAchat: formValue.dateAchat,
       prixTotal: this.achatService.calculerPrixTotal(formValue.quantite, formValue.prixUnitaire)
     };
 

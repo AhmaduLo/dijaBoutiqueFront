@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { Vente } from '../../core/models/vente.model';
 import { VenteService } from '../../core/services/vente.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { StockService } from '../../core/services/stock.service';
+import { StockDto } from '../../core/models/stock.model';
 import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
 
 @Component({
@@ -28,9 +30,20 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
             <div class="form-row">
               <div class="form-group">
                 <label>Nom du produit *</label>
-                <input type="text" formControlName="nomProduit" placeholder="Ex: Bracelet argent" />
+                <select formControlName="nomProduit" (change)="onProductChange()">
+                  <option value="">-- Sélectionner un produit --</option>
+                  <option *ngFor="let produit of produitsDisponibles" [value]="produit.nomProduit">
+                    {{ produit.nomProduit }} (Stock: {{ produit.stockDisponible }})
+                  </option>
+                </select>
                 <div class="error" *ngIf="venteForm.get('nomProduit')?.invalid && venteForm.get('nomProduit')?.touched">
-                  Le nom du produit est requis
+                  Veuillez sélectionner un produit
+                </div>
+                <div class="info-stock" *ngIf="selectedProduct">
+                  <small>
+                    📦 Stock disponible: {{ selectedProduct.stockDisponible }} unités |
+                    💰 Prix de vente suggéré: {{ selectedProduct.prixMoyenVente | currencyEur }}
+                  </small>
                 </div>
               </div>
               <div class="form-group">
@@ -137,6 +150,8 @@ export class VentesComponent implements OnInit {
   ventes: Vente[] = [];
   filteredVentes: Vente[] = [];
   venteForm: FormGroup;
+  produitsDisponibles: StockDto[] = [];
+  selectedProduct?: StockDto;
   showForm = false;
   isEditing = false;
   isLoading = true;
@@ -147,6 +162,7 @@ export class VentesComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private venteService: VenteService,
+    private stockService: StockService,
     private notificationService: NotificationService
   ) {
     this.venteForm = this.fb.group({
@@ -161,6 +177,36 @@ export class VentesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadVentes();
+    this.loadProduitsDisponibles();
+  }
+
+  loadProduitsDisponibles(): void {
+    this.stockService.getProduitsDisponibles().subscribe({
+      next: (produits) => {
+        this.produitsDisponibles = produits;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des produits:', error);
+        this.notificationService.error('Impossible de charger les produits disponibles');
+      }
+    });
+  }
+
+  onProductChange(): void {
+    const nomProduit = this.venteForm.get('nomProduit')?.value;
+    if (nomProduit) {
+      this.selectedProduct = this.produitsDisponibles.find(p => p.nomProduit === nomProduit);
+
+      // Auto-remplir le prix de vente avec le prix moyen de vente du stock
+      if (this.selectedProduct && this.selectedProduct.prixMoyenVente > 0) {
+        this.venteForm.patchValue({
+          prixUnitaire: this.selectedProduct.prixMoyenVente
+        });
+        this.calculerTotal();
+      }
+    } else {
+      this.selectedProduct = undefined;
+    }
   }
 
   loadVentes(): void {
@@ -194,7 +240,9 @@ export class VentesComponent implements OnInit {
   openForm(): void {
     this.showForm = true;
     this.isEditing = false;
+    this.selectedProduct = undefined;
     this.venteForm.reset({
+      nomProduit: '',
       quantite: 1,
       prixUnitaire: 0,
       dateVente: new Date().toISOString().split('T')[0],
@@ -206,6 +254,7 @@ export class VentesComponent implements OnInit {
     this.showForm = false;
     this.isEditing = false;
     this.currentVenteId = undefined;
+    this.selectedProduct = undefined;
     this.venteForm.reset();
   }
 
