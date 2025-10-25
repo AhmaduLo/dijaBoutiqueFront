@@ -8,6 +8,8 @@ import { NotificationService } from '../../core/services/notification.service';
 import { StockService } from '../../core/services/stock.service';
 import { StockDto } from '../../core/models/stock.model';
 import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
+import { CurrencyService } from '../../core/services/currency.service';
+import { Currency } from '../../core/models/currency.model';
 
 @Component({
   selector: 'app-ventes',
@@ -60,7 +62,7 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
                 <input type="number" formControlName="quantite" min="1" (input)="calculerTotal()" />
               </div>
               <div class="form-group">
-                <label>Prix unitaire (€) *</label>
+                <label>Prix unitaire ({{ selectedCurrency?.symbole || 'CFA' }}) *</label>
                 <input type="number" formControlName="prixUnitaire" min="0" step="0.01" (input)="calculerTotal()" />
               </div>
             </div>
@@ -70,7 +72,7 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
                 <input type="date" formControlName="dateVente" />
               </div>
               <div class="form-group">
-                <label>Prix total (€)</label>
+                <label>Prix total ({{ selectedCurrency?.symbole || 'CFA' }})</label>
                 <input type="number" formControlName="prixTotal" readonly class="readonly" />
               </div>
             </div>
@@ -114,8 +116,14 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
               <td class="bold">{{ vente.nomProduit }}</td>
               <td>{{ vente.client }}</td>
               <td>{{ vente.quantite }}</td>
-              <td>{{ vente.prixUnitaire | currencyEur }}</td>
-              <td class="bold">{{ vente.prixTotal | currencyEur }}</td>
+              <td>
+                {{ vente.prixUnitaire | number:'1.0-2':'fr-FR' }}
+                <span class="currency-badge-small">{{ vente.deviseSymbole || defaultCurrency?.symbole || 'CFA' }}</span>
+              </td>
+              <td class="bold">
+                {{ vente.prixTotal | number:'1.0-2':'fr-FR' }}
+                <span class="currency-badge">{{ vente.deviseSymbole || defaultCurrency?.symbole || 'CFA' }}</span>
+              </td>
               <td>{{ vente.utilisateur?.prenom || 'N/A' }}</td>
               <td>
                 <div class="actions">
@@ -127,9 +135,12 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
           </tbody>
           <tfoot>
             <tr class="total-row">
-              <td colspan="6" class="text-right"><strong>Total :</strong></td>
-              <td class="bold">{{ calculateTotal() | currencyEur }}</td>
-              <td></td>
+              <td colspan="5" class="text-right"><strong>Total :</strong></td>
+              <td class="bold">
+                {{ calculateTotal() | number:'1.0-2':'fr-FR' }}
+                <span class="currency-badge">{{ defaultCurrency?.symbole || 'CFA' }}</span>
+              </td>
+              <td colspan="2"></td>
             </tr>
           </tfoot>
         </table>
@@ -159,11 +170,17 @@ export class VentesComponent implements OnInit {
   searchTerm = '';
   currentVenteId?: number;
 
+  // Devise
+  currencies: Currency[] = [];
+  selectedCurrency?: Currency;
+  defaultCurrency?: Currency;
+
   constructor(
     private fb: FormBuilder,
     private venteService: VenteService,
     private stockService: StockService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private currencyService: CurrencyService
   ) {
     this.venteForm = this.fb.group({
       nomProduit: ['', Validators.required],
@@ -176,8 +193,35 @@ export class VentesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadCurrencies();
     this.loadVentes();
     this.loadProduitsDisponibles();
+  }
+
+  /**
+   * Charge les devises et sélectionne la devise par défaut
+   */
+  loadCurrencies(): void {
+    this.currencyService.getAllCurrencies().subscribe({
+      next: (currencies) => {
+        this.currencies = currencies;
+        this.defaultCurrency = currencies.find(c => c.isDefault);
+        this.selectedCurrency = this.defaultCurrency;
+      },
+      error: (error) => {
+        console.warn('Impossible de charger les devises, utilisation de CFA par défaut', error);
+        // Fallback vers CFA
+        this.defaultCurrency = {
+          code: 'XOF',
+          nom: 'Franc CFA',
+          symbole: 'CFA',
+          pays: 'Sénégal',
+          isDefault: true
+        };
+        this.selectedCurrency = this.defaultCurrency;
+        this.currencies = [this.defaultCurrency];
+      }
+    });
   }
 
   loadProduitsDisponibles(): void {
@@ -282,7 +326,10 @@ export class VentesComponent implements OnInit {
     const formValue = this.venteForm.getRawValue();
     const vente: Vente = {
       ...formValue,
-      prixTotal: this.venteService.calculerPrixTotal(formValue.quantite, formValue.prixUnitaire)
+      prixTotal: this.venteService.calculerPrixTotal(formValue.quantite, formValue.prixUnitaire),
+      deviseId: this.selectedCurrency?.id,
+      deviseCode: this.selectedCurrency?.code,
+      deviseSymbole: this.selectedCurrency?.symbole
     };
     const operation = this.isEditing && this.currentVenteId
       ? this.venteService.update(this.currentVenteId, vente)

@@ -52,7 +52,7 @@ import { Currency } from '../../core/models/currency.model';
 
       <div class="metrics-grid" *ngIf="!isLoading">
         <app-metric-card
-          [title]="'Total Achats (' + (defaultCurrency?.symbole || 'CFA') + ')'"
+          [title]="titleAchats"
           [value]="totalAchats"
           icon="🛒"
           color="pink"
@@ -60,7 +60,7 @@ import { Currency } from '../../core/models/currency.model';
         ></app-metric-card>
 
         <app-metric-card
-          [title]='"Chiffre d\'Affaires (" + (defaultCurrency?.symbole || "CFA") + ")"'
+          [title]="titleCA"
           [value]="chiffreAffaires"
           icon="💰"
           color="green"
@@ -68,7 +68,7 @@ import { Currency } from '../../core/models/currency.model';
         ></app-metric-card>
 
         <app-metric-card
-          [title]="'Total Dépenses (' + (defaultCurrency?.symbole || 'CFA') + ')'"
+          [title]="titleDepenses"
           [value]="totalDepenses"
           icon="💳"
           color="orange"
@@ -76,7 +76,7 @@ import { Currency } from '../../core/models/currency.model';
         ></app-metric-card>
 
         <app-metric-card
-          [title]="'Bénéfice Net (' + (defaultCurrency?.symbole || 'CFA') + ')'"
+          [title]="titleBenefice"
           [value]="beneficeNet"
           icon="📊"
           [color]="beneficeNet >= 0 ? 'purple' : 'orange'"
@@ -156,6 +156,23 @@ export class DashboardComponent implements OnInit {
   // Devise
   defaultCurrency?: Currency;
 
+  // Titres des métriques
+  get titleAchats(): string {
+    return this.getTitleWithCurrency('Total Achats');
+  }
+
+  get titleCA(): string {
+    return this.getTitleWithCurrency('Chiffre d\'Affaires');
+  }
+
+  get titleDepenses(): string {
+    return this.getTitleWithCurrency('Total Dépenses');
+  }
+
+  get titleBenefice(): string {
+    return this.getTitleWithCurrency('Bénéfice Net');
+  }
+
   isLoading = true;
 
   constructor(
@@ -195,6 +212,14 @@ export class DashboardComponent implements OnInit {
         };
       }
     });
+  }
+
+  /**
+   * Génère un titre avec le symbole de la devise
+   */
+  getTitleWithCurrency(title: string): string {
+    const symbole = this.defaultCurrency?.symbole || 'CFA';
+    return `${title} (${symbole})`;
   }
 
   /**

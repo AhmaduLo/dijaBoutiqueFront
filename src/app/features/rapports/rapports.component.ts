@@ -5,6 +5,8 @@ import { RapportService } from '../../core/services/rapport.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { RapportComplet, TypeRapport, FiltreRapport } from '../../core/models/rapport.model';
 import { MetricCardComponent } from '../../shared/components/metric-card/metric-card.component';
+import { CurrencyService } from '../../core/services/currency.service';
+import { Currency } from '../../core/models/currency.model';
 
 /**
  * Composant de génération et visualisation de rapports
@@ -23,12 +25,6 @@ import { MetricCardComponent } from '../../shared/components/metric-card/metric-
         <div class="actions">
           <button class="btn btn-primary" (click)="exporterPDF()" [disabled]="!rapportGenere || isLoading">
             📑 Exporter PDF
-          </button>
-          <button class="btn btn-secondary" (click)="exporterCSV()" [disabled]="!rapportGenere || isLoading">
-            📄 Exporter CSV
-          </button>
-          <button class="btn btn-secondary" (click)="exporterJSON()" [disabled]="!rapportGenere || isLoading">
-            📊 Exporter JSON
           </button>
         </div>
       </div>
@@ -92,7 +88,7 @@ import { MetricCardComponent } from '../../shared/components/metric-card/metric-
         <!-- Métriques principales -->
         <div class="metrics-grid">
           <app-metric-card
-            title="Chiffre d'Affaires"
+            [title]="'Chiffre d\\'Affaires (' + (defaultCurrency?.symbole || 'CFA') + ')'"
             [value]="rapport!.periode.chiffreAffaires"
             icon="💰"
             color="green"
@@ -100,7 +96,7 @@ import { MetricCardComponent } from '../../shared/components/metric-card/metric-
           ></app-metric-card>
 
           <app-metric-card
-            title="Total Achats"
+            [title]="'Total Achats (' + (defaultCurrency?.symbole || 'CFA') + ')'"
             [value]="rapport!.periode.totalAchats"
             icon="🛒"
             color="pink"
@@ -108,7 +104,7 @@ import { MetricCardComponent } from '../../shared/components/metric-card/metric-
           ></app-metric-card>
 
           <app-metric-card
-            title="Total Dépenses"
+            [title]="'Total Dépenses (' + (defaultCurrency?.symbole || 'CFA') + ')'"
             [value]="rapport!.periode.totalDepenses"
             icon="💳"
             color="orange"
@@ -116,7 +112,7 @@ import { MetricCardComponent } from '../../shared/components/metric-card/metric-
           ></app-metric-card>
 
           <app-metric-card
-            title="Bénéfice Net"
+            [title]="'Bénéfice Net (' + (defaultCurrency?.symbole || 'CFA') + ')'"
             [value]="rapport!.periode.beneficeNet"
             icon="📊"
             [color]="rapport!.periode.beneficeNet >= 0 ? 'purple' : 'orange'"
@@ -313,17 +309,46 @@ export class RapportsComponent implements OnInit {
 
   anneesDisponibles: number[] = [];
 
+  // Devise
+  defaultCurrency?: Currency;
+
   constructor(
     private rapportService: RapportService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private currencyService: CurrencyService
   ) {}
 
   ngOnInit(): void {
+    this.loadCurrency();
     // Génère les 5 dernières années
     const anneeActuelle = new Date().getFullYear();
     for (let i = 0; i < 5; i++) {
       this.anneesDisponibles.push(anneeActuelle - i);
     }
+  }
+
+  /**
+   * Charge la devise par défaut
+   */
+  loadCurrency(): void {
+    this.currencyService.getAllCurrencies().subscribe({
+      next: (currencies) => {
+        this.defaultCurrency = currencies.find(c => c.isDefault);
+        if (!this.defaultCurrency && currencies.length > 0) {
+          this.defaultCurrency = currencies[0];
+        }
+      },
+      error: (error) => {
+        console.warn('Impossible de charger les devises, utilisation de CFA par défaut', error);
+        this.defaultCurrency = {
+          code: 'XOF',
+          nom: 'Franc CFA',
+          symbole: 'CFA',
+          pays: 'Sénégal',
+          isDefault: true
+        };
+      }
+    });
   }
 
   onTypeRapportChange(): void {

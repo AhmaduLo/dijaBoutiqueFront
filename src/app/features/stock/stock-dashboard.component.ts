@@ -5,6 +5,8 @@ import { StockService } from '../../core/services/stock.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { StockDto, ResumeStock, AlerteStock, StatutStock } from '../../core/models/stock.model';
 import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
+import { CurrencyService } from '../../core/services/currency.service';
+import { Currency } from '../../core/models/currency.model';
 
 /**
  * Composant du dashboard de gestion de stock
@@ -60,9 +62,9 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
         <div class="card card-value">
           <div class="card-icon">💰</div>
           <div class="card-content">
-            <h3>Valeur Stock</h3>
-            <p class="card-value">{{ resume.valeurTotaleStock | currencyEur }}</p>
-            <small>Marge: {{ resume.margeGlobale | currencyEur }}</small>
+            <h3>Valeur Stock ({{ defaultCurrency?.symbole || 'CFA' }})</h3>
+            <p class="card-value">{{ resume.valeurTotaleStock | number:'1.0-2':'fr-FR' }}</p>
+            <small>Marge: {{ resume.margeGlobale | number:'1.0-2':'fr-FR' }} {{ defaultCurrency?.symbole || 'CFA' }}</small>
           </div>
         </div>
       </div>
@@ -153,11 +155,11 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
                   </div>
                 </div>
               </td>
-              <td>{{ stock.prixMoyenAchat | currencyEur }}</td>
-              <td>{{ stock.prixMoyenVente | currencyEur }}</td>
-              <td class="bold">{{ stock.valeurStock | currencyEur }}</td>
+              <td>{{ stock.prixMoyenAchat | number:'1.0-2':'fr-FR' }} <span class="currency-symbol">{{ defaultCurrency?.symbole || 'CFA' }}</span></td>
+              <td>{{ stock.prixMoyenVente | number:'1.0-2':'fr-FR' }} <span class="currency-symbol">{{ defaultCurrency?.symbole || 'CFA' }}</span></td>
+              <td class="bold">{{ stock.valeurStock | number:'1.0-2':'fr-FR' }} <span class="currency-symbol">{{ defaultCurrency?.symbole || 'CFA' }}</span></td>
               <td [class.positive]="stock.margeUnitaire > 0" [class.negative]="stock.margeUnitaire < 0">
-                {{ stock.margeUnitaire | currencyEur }}
+                {{ stock.margeUnitaire | number:'1.0-2':'fr-FR' }} <span class="currency-symbol">{{ defaultCurrency?.symbole || 'CFA' }}</span>
               </td>
               <td>
                 <span class="rotation-badge">{{ calculerTauxRotation(stock) | number:'1.0-0' }}%</span>
@@ -176,8 +178,8 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
               <td colspan="3" class="text-right"><strong>Totaux :</strong></td>
               <td class="bold">{{ calculateTotalStock() }}</td>
               <td colspan="2"></td>
-              <td class="bold">{{ calculateTotalValue() | currencyEur }}</td>
-              <td class="bold">{{ calculateTotalMarge() | currencyEur }}</td>
+              <td class="bold">{{ calculateTotalValue() | number:'1.0-2':'fr-FR' }} <span class="currency-symbol">{{ defaultCurrency?.symbole || 'CFA' }}</span></td>
+              <td class="bold">{{ calculateTotalMarge() | number:'1.0-2':'fr-FR' }} <span class="currency-symbol">{{ defaultCurrency?.symbole || 'CFA' }}</span></td>
               <td colspan="2"></td>
             </tr>
           </tfoot>
@@ -205,13 +207,42 @@ export class StockDashboardComponent implements OnInit {
   selectedStatut = '';
   sortBy = 'nom';
 
+  // Devise
+  defaultCurrency?: Currency;
+
   constructor(
     private stockService: StockService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private currencyService: CurrencyService
   ) {}
 
   ngOnInit(): void {
+    this.loadCurrency();
     this.loadData();
+  }
+
+  /**
+   * Charge la devise par défaut
+   */
+  loadCurrency(): void {
+    this.currencyService.getAllCurrencies().subscribe({
+      next: (currencies) => {
+        this.defaultCurrency = currencies.find(c => c.isDefault);
+        if (!this.defaultCurrency && currencies.length > 0) {
+          this.defaultCurrency = currencies[0];
+        }
+      },
+      error: (error) => {
+        console.warn('Impossible de charger les devises, utilisation de CFA par défaut', error);
+        this.defaultCurrency = {
+          code: 'XOF',
+          nom: 'Franc CFA',
+          symbole: 'CFA',
+          pays: 'Sénégal',
+          isDefault: true
+        };
+      }
+    });
   }
 
   loadData(): void {

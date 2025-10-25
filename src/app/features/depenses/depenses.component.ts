@@ -6,6 +6,8 @@ import { Depense, CategorieDepense } from '../../core/models/depense.model';
 import { DepenseService } from '../../core/services/depense.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
+import { CurrencyService } from '../../core/services/currency.service';
+import { Currency } from '../../core/models/currency.model';
 
 @Component({
   selector: 'app-depenses',
@@ -39,7 +41,7 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Montant (€) *</label>
+                <label>Montant ({{ selectedCurrency?.symbole || 'CFA' }}) *</label>
                 <input type="number" formControlName="montant" min="0" step="0.01" />
               </div>
               <div class="form-group">
@@ -99,7 +101,10 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
               <td>{{ formatDate(depense.dateDepense) }}</td>
               <td class="bold">{{ depense.libelle }}</td>
               <td><span class="badge">{{ getCategorieLabel(depense.categorie) }}</span></td>
-              <td class="bold">{{ depense.montant | currencyEur }}</td>
+              <td class="bold">
+                {{ depense.montant | number:'1.0-2':'fr-FR' }}
+                <span class="currency-badge">{{ depense.deviseSymbole || defaultCurrency?.symbole || 'CFA' }}</span>
+              </td>
               <td>
                 <span class="badge-recurring" *ngIf="depense.estRecurrente">🔁 Oui</span>
                 <span *ngIf="!depense.estRecurrente">-</span>
@@ -115,9 +120,12 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
           </tbody>
           <tfoot>
             <tr class="total-row">
-              <td colspan="4" class="text-right"><strong>Total :</strong></td>
-              <td class="bold">{{ calculateTotal() | currencyEur }}</td>
-              <td colspan="2"></td>
+              <td colspan="3" class="text-right"><strong>Total :</strong></td>
+              <td class="bold">
+                {{ calculateTotal() | number:'1.0-2':'fr-FR' }}
+                <span class="currency-badge">{{ defaultCurrency?.symbole || 'CFA' }}</span>
+              </td>
+              <td colspan="3"></td>
             </tr>
           </tfoot>
         </table>
@@ -145,10 +153,16 @@ export class DepensesComponent implements OnInit {
   selectedCategorie = '';
   currentDepenseId?: number;
 
+  // Devise
+  currencies: Currency[] = [];
+  selectedCurrency?: Currency;
+  defaultCurrency?: Currency;
+
   constructor(
     private fb: FormBuilder,
     private depenseService: DepenseService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private currencyService: CurrencyService
   ) {
     this.categories = this.depenseService.getCategories();
     this.depenseForm = this.fb.group({
@@ -162,7 +176,34 @@ export class DepensesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadCurrencies();
     this.loadDepenses();
+  }
+
+  /**
+   * Charge les devises et sélectionne la devise par défaut
+   */
+  loadCurrencies(): void {
+    this.currencyService.getAllCurrencies().subscribe({
+      next: (currencies) => {
+        this.currencies = currencies;
+        this.defaultCurrency = currencies.find(c => c.isDefault);
+        this.selectedCurrency = this.defaultCurrency;
+      },
+      error: (error) => {
+        console.warn('Impossible de charger les devises, utilisation de CFA par défaut', error);
+        // Fallback vers CFA
+        this.defaultCurrency = {
+          code: 'XOF',
+          nom: 'Franc CFA',
+          symbole: 'CFA',
+          pays: 'Sénégal',
+          isDefault: true
+        };
+        this.selectedCurrency = this.defaultCurrency;
+        this.currencies = [this.defaultCurrency];
+      }
+    });
   }
 
   loadDepenses(): void {
@@ -227,7 +268,12 @@ export class DepensesComponent implements OnInit {
       return;
     }
     this.isSubmitting = true;
-    const depense: Depense = this.depenseForm.getRawValue();
+    const depense: Depense = {
+      ...this.depenseForm.getRawValue(),
+      deviseId: this.selectedCurrency?.id,
+      deviseCode: this.selectedCurrency?.code,
+      deviseSymbole: this.selectedCurrency?.symbole
+    };
     const operation = this.isEditing && this.currentDepenseId
       ? this.depenseService.update(this.currentDepenseId, depense)
       : this.depenseService.create(depense);

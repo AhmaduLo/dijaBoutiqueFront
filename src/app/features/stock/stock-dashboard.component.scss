@@ -3,6 +3,13 @@
   max-width: 1400px;
   margin: 0 auto;
 
+  .currency-symbol {
+    font-size: 0.85rem;
+    color: #c2185b;
+    font-weight: 600;
+    margin-left: 0.25rem;
+  }
+
   .page-header {
     display: flex;
     justify-content: space-between;
