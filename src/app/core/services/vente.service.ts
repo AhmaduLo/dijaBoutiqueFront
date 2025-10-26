@@ -77,7 +77,9 @@ export class VenteService {
    * Met à jour une vente existante
    */
   update(id: number, vente: Vente): Observable<Vente> {
-    return this.http.put<Vente>(`${this.API_URL}/${id}`, vente);
+    const userId = this.authService.getCurrentUserId();
+    const params = new HttpParams().set('utilisateurId', userId.toString());
+    return this.http.put<Vente>(`${this.API_URL}/${id}`, vente, { params });
   }
 
   /**

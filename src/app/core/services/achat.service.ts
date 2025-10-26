@@ -65,7 +65,9 @@ export class AchatService {
    * Met à jour un achat existant
    */
   update(id: number, achat: Achat): Observable<Achat> {
-    return this.http.put<Achat>(`${this.API_URL}/${id}`, achat);
+    const userId = this.authService.getCurrentUserId();
+    const params = new HttpParams().set('utilisateurId', userId.toString());
+    return this.http.put<Achat>(`${this.API_URL}/${id}`, achat, { params });
   }
 
   /**

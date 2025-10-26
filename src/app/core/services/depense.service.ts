@@ -84,7 +84,9 @@ export class DepenseService {
    * Met à jour une dépense existante
    */
   update(id: number, depense: Depense): Observable<Depense> {
-    return this.http.put<Depense>(`${this.API_URL}/${id}`, depense);
+    const userId = this.authService.getCurrentUserId();
+    const params = new HttpParams().set('utilisateurId', userId.toString());
+    return this.http.put<Depense>(`${this.API_URL}/${id}`, depense, { params });
   }
 
   /**
