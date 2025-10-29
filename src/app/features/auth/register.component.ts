@@ -51,6 +51,34 @@ import { RegisterRequest } from '../../core/models/auth.model';
           </div>
 
           <div class="form-group">
+            <label>Nom de l'entreprise *</label>
+            <input type="text" formControlName="nomEntreprise" placeholder="Ex: Boutique Dija" />
+            <div class="error" *ngIf="registerForm.get('nomEntreprise')?.invalid && registerForm.get('nomEntreprise')?.touched">
+              Le nom de l'entreprise est requis
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Numéro de téléphone *</label>
+            <div class="phone-input-group">
+              <select formControlName="indicatifPays" class="country-code-select">
+                <option *ngFor="let country of countries" [value]="country.code">
+                  {{ country.flag }} {{ country.dialCode }}
+                </option>
+              </select>
+              <input
+                type="tel"
+                formControlName="numeroTelephone"
+                placeholder="77 123 45 67"
+                class="phone-number-input"
+              />
+            </div>
+            <div class="error" *ngIf="registerForm.get('numeroTelephone')?.invalid && registerForm.get('numeroTelephone')?.touched">
+              Le numéro de téléphone est requis
+            </div>
+          </div>
+
+          <div class="form-group">
             <label>Mot de passe *</label>
             <input type="password" formControlName="password" placeholder="Minimum 6 caractères" />
             <div class="error" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
@@ -87,6 +115,35 @@ export class RegisterComponent {
   registerForm: FormGroup;
   isSubmitting = false;
 
+  // Liste des pays avec indicatifs téléphoniques
+  countries = [
+    { code: 'SN', name: 'Sénégal', dialCode: '+221', flag: '🇸🇳' },
+    { code: 'FR', name: 'France', dialCode: '+33', flag: '🇫🇷' },
+    { code: 'ML', name: 'Mali', dialCode: '+223', flag: '🇲🇱' },
+    { code: 'CI', name: 'Côte d\'Ivoire', dialCode: '+225', flag: '🇨🇮' },
+    { code: 'BF', name: 'Burkina Faso', dialCode: '+226', flag: '🇧🇫' },
+    { code: 'NE', name: 'Niger', dialCode: '+227', flag: '🇳🇪' },
+    { code: 'TG', name: 'Togo', dialCode: '+228', flag: '🇹🇬' },
+    { code: 'BJ', name: 'Bénin', dialCode: '+229', flag: '🇧🇯' },
+    { code: 'MR', name: 'Mauritanie', dialCode: '+222', flag: '🇲🇷' },
+    { code: 'GN', name: 'Guinée', dialCode: '+224', flag: '🇬🇳' },
+    { code: 'CM', name: 'Cameroun', dialCode: '+237', flag: '🇨🇲' },
+    { code: 'GA', name: 'Gabon', dialCode: '+241', flag: '🇬🇦' },
+    { code: 'CD', name: 'RD Congo', dialCode: '+243', flag: '🇨🇩' },
+    { code: 'CG', name: 'Congo', dialCode: '+242', flag: '🇨🇬' },
+    { code: 'MA', name: 'Maroc', dialCode: '+212', flag: '🇲🇦' },
+    { code: 'DZ', name: 'Algérie', dialCode: '+213', flag: '🇩🇿' },
+    { code: 'TN', name: 'Tunisie', dialCode: '+216', flag: '🇹🇳' },
+    { code: 'US', name: 'États-Unis', dialCode: '+1', flag: '🇺🇸' },
+    { code: 'GB', name: 'Royaume-Uni', dialCode: '+44', flag: '🇬🇧' },
+    { code: 'DE', name: 'Allemagne', dialCode: '+49', flag: '🇩🇪' },
+    { code: 'ES', name: 'Espagne', dialCode: '+34', flag: '🇪🇸' },
+    { code: 'IT', name: 'Italie', dialCode: '+39', flag: '🇮🇹' },
+    { code: 'BE', name: 'Belgique', dialCode: '+32', flag: '🇧🇪' },
+    { code: 'CH', name: 'Suisse', dialCode: '+41', flag: '🇨🇭' },
+    { code: 'CA', name: 'Canada', dialCode: '+1', flag: '🇨🇦' }
+  ];
+
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
@@ -97,6 +154,9 @@ export class RegisterComponent {
       prenom: ['', Validators.required],
       nom: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
+      nomEntreprise: ['', Validators.required],
+      indicatifPays: ['SN', Validators.required],
+      numeroTelephone: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', Validators.required]
     }, { validators: this.passwordMatchValidator });
@@ -124,12 +184,20 @@ export class RegisterComponent {
     }
 
     this.isSubmitting = true;
-    const { confirmPassword, password, ...registerData } = this.registerForm.value;
+    const { confirmPassword, password, indicatifPays, numeroTelephone, ...registerData } = this.registerForm.value;
+
+    // Trouver l'indicatif téléphonique du pays sélectionné
+    const selectedCountry = this.countries.find(c => c.code === indicatifPays);
+    const dialCode = selectedCountry?.dialCode || '+221';
+
+    // Combiner l'indicatif avec le numéro
+    const fullPhoneNumber = `${dialCode} ${numeroTelephone}`;
 
     // Convertir 'password' en 'motDePasse' pour le backend
     const dataToSend: RegisterRequest = {
       ...registerData,
-      motDePasse: password
+      motDePasse: password,
+      numeroTelephone: fullPhoneNumber
     };
 
     this.authService.register(dataToSend).subscribe({

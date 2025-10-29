@@ -81,6 +81,50 @@
   }
 }
 
+// Groupe d'input téléphone avec sélecteur de pays
+.phone-input-group {
+  display: flex;
+  gap: 0.5rem;
+
+  .country-code-select {
+    width: 130px;
+    padding: 0.875rem 0.5rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    background-color: white;
+    cursor: pointer;
+
+    &:focus {
+      outline: none;
+      border-color: #c2185b;
+      box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+    }
+  }
+
+  .phone-number-input {
+    flex: 1;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    font-family: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: #c2185b;
+      box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+    }
+
+    &::placeholder {
+      color: #999;
+    }
+  }
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -6,6 +6,8 @@ export interface User {
   nom: string;
   prenom: string;
   email: string;
+  nomEntreprise?: string;
+  numeroTelephone?: string;
   role?: string;
   createdAt?: string;
 }
@@ -18,6 +20,8 @@ export interface RegisterRequest {
   prenom: string;
   email: string;
   motDePasse: string;
+  nomEntreprise: string;
+  numeroTelephone: string;
 }
 
 /**
