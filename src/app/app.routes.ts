@@ -2,10 +2,10 @@ import { Routes } from '@angular/router';
 import { authGuard, guestGuard, adminGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
+  // Page d'accueil (Landing page)
   {
     path: '',
-    redirectTo: '/login',
-    pathMatch: 'full'
+    loadComponent: () => import('./features/landing/landing.component').then(m => m.LandingComponent)
   },
   // Routes d'authentification (accessibles uniquement si non connecté)
   {
