@@ -13,7 +13,7 @@
 
     h1 {
       margin: 0 0 0.5rem 0;
-      color: #c2185b;
+      color: #1e40af;
       font-size: 2rem;
       font-weight: 600;
     }
@@ -29,7 +29,7 @@
       padding: 0.5rem 1rem;
       background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
       border-radius: 8px;
-      border-left: 4px solid #c2185b;
+      border-left: 4px solid #1e40af;
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
@@ -45,7 +45,7 @@
       }
 
       strong {
-        color: #c2185b;
+        color: #1e40af;
         font-weight: 700;
       }
     }
@@ -79,12 +79,12 @@
     transition: all 0.2s ease;
 
     &:hover {
-      border-color: #c2185b;
+      border-color: #1e40af;
     }
 
     &:focus {
       outline: none;
-      border-color: #c2185b;
+      border-color: #1e40af;
       box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
     }
   }
@@ -103,7 +103,7 @@
 
       &:focus {
         outline: none;
-        border-color: #c2185b;
+        border-color: #1e40af;
         box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
       }
     }
@@ -123,7 +123,7 @@
     width: 50px;
     height: 50px;
     border: 4px solid #f3f3f3;
-    border-top: 4px solid #c2185b;
+    border-top: 4px solid #1e40af;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 1rem;

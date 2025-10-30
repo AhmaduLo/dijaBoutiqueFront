@@ -399,7 +399,7 @@
       <div class="company-card" style="background: white; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 3px solid #f3f4f6;">
           <h2 style="margin: 0; font-size: 1.75rem; color: #1f2937; font-weight: 700;">🏢 Informations de l'entreprise</h2>
-          <button class="btn btn-primary" *ngIf="!isEditingTenant" (click)="startEditingTenant()" style="background: #e91e63; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+          <button class="btn btn-primary" *ngIf="!isEditingTenant" (click)="startEditingTenant()" style="background: #1e40af; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
             ✏️ Modifier
           </button>
         </div>
@@ -408,11 +408,11 @@
         <div class="company-info" *ngIf="!isEditingTenant" style="display: grid; gap: 2rem;">
           <div class="info-row" style="display: flex; flex-direction: column;">
             <label style="font-weight: 600; color: #6b7280; margin-bottom: 0.75rem; font-size: 0.875rem; text-transform: uppercase;">Nom de l'entreprise :</label>
-            <p style="margin: 0; font-size: 1.25rem; color: #1f2937; padding: 1rem 1.25rem; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 10px; border-left: 4px solid #e91e63; font-weight: 500;">{{ tenant.nomEntreprise }}</p>
+            <p style="margin: 0; font-size: 1.25rem; color: #1f2937; padding: 1rem 1.25rem; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 10px; border-left: 4px solid #1e40af; font-weight: 500;">{{ tenant.nomEntreprise }}</p>
           </div>
           <div class="info-row" style="display: flex; flex-direction: column;">
             <label style="font-weight: 600; color: #6b7280; margin-bottom: 0.75rem; font-size: 0.875rem; text-transform: uppercase;">Numéro de téléphone :</label>
-            <p style="margin: 0; font-size: 1.25rem; color: #1f2937; padding: 1rem 1.25rem; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 10px; border-left: 4px solid #e91e63; font-weight: 500;">{{ tenant.numeroTelephone }}</p>
+            <p style="margin: 0; font-size: 1.25rem; color: #1f2937; padding: 1rem 1.25rem; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 10px; border-left: 4px solid #1e40af; font-weight: 500;">{{ tenant.numeroTelephone }}</p>
           </div>
           <div class="info-row" style="display: flex; flex-direction: column;">
             <label style="font-weight: 600; color: #6b7280; margin-bottom: 0.75rem; font-size: 0.875rem; text-transform: uppercase;">Identifiant unique (UUID) :</label>
@@ -442,7 +442,7 @@
             <button type="button" class="btn btn-secondary" (click)="cancelEditingTenant()" style="flex: 1; padding: 0.875rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; background: #f3f4f6; color: #6b7280; border: 2px solid #e5e7eb;">
               Annuler
             </button>
-            <button type="submit" class="btn btn-primary" [disabled]="tenantForm.invalid || isSubmitting" style="flex: 1; padding: 0.875rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; background: #e91e63; color: white; border: none;" [style.opacity]="(tenantForm.invalid || isSubmitting) ? '0.5' : '1'" [style.cursor]="(tenantForm.invalid || isSubmitting) ? 'not-allowed' : 'pointer'">
+            <button type="submit" class="btn btn-primary" [disabled]="tenantForm.invalid || isSubmitting" style="flex: 1; padding: 0.875rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; background: #1e40af; color: white; border: none;" [style.opacity]="(tenantForm.invalid || isSubmitting) ? '0.5' : '1'" [style.cursor]="(tenantForm.invalid || isSubmitting) ? 'not-allowed' : 'pointer'">
               {{ isSubmitting ? 'Enregistrement...' : 'Enregistrer' }}
             </button>
           </div>

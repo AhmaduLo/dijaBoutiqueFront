@@ -79,7 +79,7 @@
     width: 64px;
     height: 64px;
     margin: 0 auto 1rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e40af 0%, #0891b2 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -136,17 +136,17 @@
         display: block;
         font-size: 1.5rem;
         font-weight: 700;
-        color: #667eea;
+        color: #1e40af;
       }
     }
   }
 }
 
 .upgrade-section {
-  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  background: linear-gradient(135deg, #1e40af15 0%, #0891b215 100%);
   padding: 1.5rem;
   border-radius: 12px;
-  border: 2px solid #667eea30;
+  border: 2px solid #1e40af30;
 
   h3 {
     margin: 0 0 1rem;
@@ -165,7 +165,7 @@
         .price {
           font-size: 2rem;
           font-weight: 700;
-          color: #667eea;
+          color: #1e40af;
         }
 
         .period {
@@ -191,7 +191,7 @@
 
           svg {
             flex-shrink: 0;
-            color: #667eea;
+            color: #1e40af;
           }
         }
       }
@@ -239,19 +239,19 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #0891b2 100%);
   color: white;
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4);
   }
 }
 
 .btn-secondary {
   background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
+  color: #1e40af;
+  border: 2px solid #1e40af;
 
   &:hover:not(:disabled) {
     background: #f8f9fa;

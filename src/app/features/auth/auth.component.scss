@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #f48fb1 100%);
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);
 }
 
 .auth-card {
@@ -24,7 +24,7 @@
   h1 {
     margin: 0 0 1rem 0;
     font-size: 2.5rem;
-    color: #c2185b;
+    color: #1e40af;
     font-weight: 700;
   }
 
@@ -64,8 +64,8 @@
 
     &:focus {
       outline: none;
-      border-color: #c2185b;
-      box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+      border-color: #1e40af;
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
     }
 
     &::placeholder {
@@ -99,8 +99,8 @@
 
     &:focus {
       outline: none;
-      border-color: #c2185b;
-      box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+      border-color: #1e40af;
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
     }
   }
 
@@ -115,8 +115,8 @@
 
     &:focus {
       outline: none;
-      border-color: #c2185b;
-      box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+      border-color: #1e40af;
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
     }
 
     &::placeholder {
@@ -156,13 +156,13 @@
   }
 
   a {
-    color: #c2185b;
+    color: #1e40af;
     text-decoration: none;
     font-weight: 600;
     transition: all 0.2s ease;
 
     &:hover {
-      color: #a0144a;
+      color: #1e3a8a;
       text-decoration: underline;
     }
   }

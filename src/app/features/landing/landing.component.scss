@@ -1,7 +1,7 @@
 // Variables
-$primary-color: #4f46e5;
-$primary-hover: #4338ca;
-$secondary-color: #10b981;
+$primary-color: #1e40af;
+$primary-hover: #1e3a8a;
+$secondary-color: #0891b2;
 $dark-color: #1f2937;
 $light-bg: #f9fafb;
 $white: #ffffff;
@@ -82,7 +82,7 @@ $border-color: #e5e7eb;
     &:hover:not(:disabled) {
       background: $primary-hover;
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
     }
   }
 
@@ -109,7 +109,7 @@ $border-color: #e5e7eb;
     &:hover:not(:disabled) {
       background: darken($secondary-color, 10%);
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
     }
   }
 
@@ -136,7 +136,7 @@ $border-color: #e5e7eb;
 // Hero Section
 .hero-section {
   padding: 80px 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #0891b2 100%);
   color: $white;
 
   .container {
@@ -333,7 +333,7 @@ $border-color: #e5e7eb;
 // CTA Section
 .cta-section {
   padding: 80px 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #0891b2 100%);
   color: $white;
   text-align: center;
 

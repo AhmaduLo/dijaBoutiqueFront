@@ -12,7 +12,7 @@
     border-radius: 6px;
     font-size: 0.875rem;
     font-weight: 700;
-    color: #c2185b;
+    color: #1e40af;
   }
 
   .currency-badge-small {
@@ -23,7 +23,7 @@
     border-radius: 4px;
     font-size: 0.75rem;
     font-weight: 700;
-    color: #c2185b;
+    color: #1e40af;
   }
 }
 .filters {
@@ -43,8 +43,8 @@
 
     &:focus {
       outline: none;
-      border-color: #c2185b;
-      box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+      border-color: #1e40af;
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
     }
   }
 }
@@ -106,7 +106,7 @@
 
       &.bold {
         font-weight: 600;
-        color: #c2185b;
+        color: #1e40af;
       }
 
       &.text-right {

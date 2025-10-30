@@ -88,7 +88,7 @@ export class AdminService {
    */
   getRoleColor(role: UserRole): string {
     const colors: { [key in UserRole]: string } = {
-      ADMIN: '#e91e63', // Rose
+      ADMIN: '#0891b2', // Teal
       USER: '#3b82f6'  // Bleu
     };
     return colors[role];
