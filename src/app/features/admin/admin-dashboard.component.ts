@@ -215,7 +215,6 @@ export class AdminDashboardComponent implements OnInit {
 
   editUser(user: Utilisateur): void {
     if (!user.id) return;
-    console.log('Utilisateur à modifier:', user); // Debug: voir les données reçues
     this.isEditing = true;
     this.currentUserId = user.id;
     this.showForm = true;

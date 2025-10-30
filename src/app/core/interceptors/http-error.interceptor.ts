@@ -2,12 +2,14 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
 import { inject } from '@angular/core';
 import { PlanService } from '../services/plan.service';
+import { LoggerService } from '../services/logger.service';
 
 /**
  * Intercepteur pour gérer les erreurs HTTP de manière centralisée
  */
 export const httpErrorInterceptor: HttpInterceptorFn = (req, next) => {
   const planService = inject(PlanService);
+  const logger = inject(LoggerService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -46,7 +48,8 @@ export const httpErrorInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
 
-      console.error('Erreur HTTP:', errorMessage, error);
+      // Utiliser le logger sécurisé au lieu de console.error
+      logger.error('Erreur HTTP:', { message: errorMessage, status: error.status, url: error.url });
       return throwError(() => new Error(errorMessage));
     })
   );

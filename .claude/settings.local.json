@@ -4,7 +4,8 @@
       "Bash(npm run build:*)",
       "Bash(timeout /t 10)",
       "Bash(npm run start:*)",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Bash(npm audit fix:*)"
     ],
     "deny": [],
     "ask": []
