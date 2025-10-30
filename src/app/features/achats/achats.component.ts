@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Achat } from '../../core/models/achat.model';
 import { AchatService } from '../../core/services/achat.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { StockService } from '../../core/services/stock.service';
 import { StockDto } from '../../core/models/stock.model';
 import { CurrencyService } from '../../core/services/currency.service';
@@ -223,7 +224,8 @@ export class AchatsComponent implements OnInit {
     private achatService: AchatService,
     private stockService: StockService,
     private currencyService: CurrencyService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private confirmService: ConfirmService
   ) {
     this.achatForm = this.fb.group({
       nomProduit: ['', Validators.required],
@@ -438,10 +440,18 @@ export class AchatsComponent implements OnInit {
     this.achatForm.patchValue(achat);
   }
 
-  deleteAchat(achat: Achat): void {
+  async deleteAchat(achat: Achat): Promise<void> {
     if (!achat.id) return;
 
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'achat "${achat.nomProduit}" ?`)) {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Supprimer l\'achat',
+      message: `Êtes-vous sûr de vouloir supprimer l'achat "${achat.nomProduit}" ?`,
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      type: 'danger'
+    });
+
+    if (!confirmed) {
       return;
     }
 

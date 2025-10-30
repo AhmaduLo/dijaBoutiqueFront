@@ -1,0 +1,26 @@
+<div class="modal-overlay" *ngIf="isVisible" (click)="onOverlayClick()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header" [style.background-color]="getColorByType() + '15'">
+      <div class="icon-container" [style.background-color]="getColorByType()">
+        <span class="icon">{{ getIconByType() }}</span>
+      </div>
+      <h2>{{ data?.title }}</h2>
+    </div>
+
+    <div class="modal-body">
+      <p class="message">{{ data?.message }}</p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-cancel" (click)="onCancel()">
+        {{ data?.cancelText }}
+      </button>
+      <button
+        class="btn btn-confirm"
+        [style.background-color]="getColorByType()"
+        (click)="onConfirm()">
+        {{ data?.confirmText }}
+      </button>
+    </div>
+  </div>
+</div>

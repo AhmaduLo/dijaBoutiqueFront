@@ -8,6 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { CurrencyService } from '../../core/services/currency.service';
 import { TenantService } from '../../core/services/tenant.service';
 import { PlanService } from '../../core/services/plan.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { User } from '../../core/models/auth.model';
 import {
   Utilisateur,
@@ -68,7 +69,8 @@ export class AdminDashboardComponent implements OnInit {
     private currencyService: CurrencyService,
     private tenantService: TenantService,
     private notificationService: NotificationService,
-    private planService: PlanService
+    private planService: PlanService,
+    private confirmService: ConfirmService
   ) {
     this.currentUser = this.authService.getCurrentUser() || undefined;
 
@@ -228,7 +230,7 @@ export class AdminDashboardComponent implements OnInit {
     this.userForm.get('motDePasse')?.updateValueAndValidity();
   }
 
-  deleteUser(user: Utilisateur): void {
+  async deleteUser(user: Utilisateur): Promise<void> {
     if (!user.id) return;
 
     if (user.id === this.currentUser?.id) {
@@ -236,7 +238,15 @@ export class AdminDashboardComponent implements OnInit {
       return;
     }
 
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${user.prenom} ${user.nom} ?`)) {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Supprimer l\'utilisateur',
+      message: `Êtes-vous sûr de vouloir supprimer ${user.prenom} ${user.nom} ?`,
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      type: 'danger'
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -251,13 +261,20 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
-  changeRole(user: Utilisateur): void {
+  async changeRole(user: Utilisateur): Promise<void> {
     if (!user.id) return;
 
     const newRole = user.role === UserRole.ADMIN ? UserRole.USER : UserRole.ADMIN;
-    const confirmMessage = `Changer le rôle de ${user.prenom} ${user.nom} en ${this.getRoleLabel(newRole)} ?`;
 
-    if (!confirm(confirmMessage)) {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Changer le rôle',
+      message: `Changer le rôle de ${user.prenom} ${user.nom} en ${this.getRoleLabel(newRole)} ?`,
+      confirmText: 'Confirmer',
+      cancelText: 'Annuler',
+      type: 'warning'
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -404,7 +421,7 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
-  deleteCurrency(currency: Currency): void {
+  async deleteCurrency(currency: Currency): Promise<void> {
     if (!currency.id) return;
 
     if (currency.isDefault) {
@@ -412,7 +429,15 @@ export class AdminDashboardComponent implements OnInit {
       return;
     }
 
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${currency.nom} (${currency.code}) ?`)) {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Supprimer la devise',
+      message: `Êtes-vous sûr de vouloir supprimer ${currency.nom} (${currency.code}) ?`,
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      type: 'danger'
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -427,7 +452,7 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
-  setDefaultCurrency(currency: Currency): void {
+  async setDefaultCurrency(currency: Currency): Promise<void> {
     if (!currency.id) return;
 
     if (currency.isDefault) {
@@ -435,8 +460,15 @@ export class AdminDashboardComponent implements OnInit {
       return;
     }
 
-    const confirmMessage = `Définir ${currency.nom} (${currency.code}) comme devise par défaut ?`;
-    if (!confirm(confirmMessage)) {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Devise par défaut',
+      message: `Définir ${currency.nom} (${currency.code}) comme devise par défaut ?`,
+      confirmText: 'Confirmer',
+      cancelText: 'Annuler',
+      type: 'info'
+    });
+
+    if (!confirmed) {
       return;
     }
 

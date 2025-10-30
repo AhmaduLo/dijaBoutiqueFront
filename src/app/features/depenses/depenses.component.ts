@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Depense, CategorieDepense } from '../../core/models/depense.model';
 import { DepenseService } from '../../core/services/depense.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
 import { CurrencyService } from '../../core/services/currency.service';
 import { Currency } from '../../core/models/currency.model';
@@ -162,7 +163,8 @@ export class DepensesComponent implements OnInit {
     private fb: FormBuilder,
     private depenseService: DepenseService,
     private notificationService: NotificationService,
-    private currencyService: CurrencyService
+    private currencyService: CurrencyService,
+    private confirmService: ConfirmService
   ) {
     this.categories = this.depenseService.getCategories();
     this.depenseForm = this.fb.group({
@@ -300,11 +302,21 @@ export class DepensesComponent implements OnInit {
     this.depenseForm.patchValue(depense);
   }
 
-  deleteDepense(depense: Depense): void {
+  async deleteDepense(depense: Depense): Promise<void> {
     if (!depense.id) return;
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer "${depense.libelle}" ?`)) {
+
+    const confirmed = await this.confirmService.confirm({
+      title: 'Supprimer la dépense',
+      message: `Êtes-vous sûr de vouloir supprimer "${depense.libelle}" ?`,
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      type: 'danger'
+    });
+
+    if (!confirmed) {
       return;
     }
+
     this.depenseService.delete(depense.id).subscribe({
       next: () => {
         this.notificationService.success('Dépense supprimée avec succès');

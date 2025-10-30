@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmService } from '../../../core/services/confirm.service';
 import { User } from '../../../core/models/auth.model';
 
 /**
@@ -77,7 +78,8 @@ export class HeaderComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private confirmService: ConfirmService
   ) {}
 
   ngOnInit(): void {
@@ -107,9 +109,18 @@ export class HeaderComponent implements OnInit {
     return 'Dija Boutique';
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
     this.closeUserMenu();
-    if (confirm('Êtes-vous sûr de vouloir vous déconnexter ?')) {
+
+    const confirmed = await this.confirmService.confirm({
+      title: 'Déconnexion',
+      message: 'Êtes-vous sûr de vouloir vous déconnecter ?',
+      confirmText: 'Se déconnecter',
+      cancelText: 'Annuler',
+      type: 'warning'
+    });
+
+    if (confirmed) {
       this.authService.logout();
       this.router.navigate(['/login']);
     }

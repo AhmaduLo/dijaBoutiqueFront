@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Vente } from '../../core/models/vente.model';
 import { VenteService } from '../../core/services/vente.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { StockService } from '../../core/services/stock.service';
 import { StockDto } from '../../core/models/stock.model';
 import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
@@ -180,7 +181,8 @@ export class VentesComponent implements OnInit {
     private venteService: VenteService,
     private stockService: StockService,
     private notificationService: NotificationService,
-    private currencyService: CurrencyService
+    private currencyService: CurrencyService,
+    private confirmService: ConfirmService
   ) {
     this.venteForm = this.fb.group({
       nomProduit: ['', Validators.required],
@@ -357,11 +359,21 @@ export class VentesComponent implements OnInit {
     this.venteForm.patchValue(vente);
   }
 
-  deleteVente(vente: Vente): void {
+  async deleteVente(vente: Vente): Promise<void> {
     if (!vente.id) return;
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer la vente "${vente.nomProduit}" ?`)) {
+
+    const confirmed = await this.confirmService.confirm({
+      title: 'Supprimer la vente',
+      message: `Êtes-vous sûr de vouloir supprimer la vente "${vente.nomProduit}" ?`,
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      type: 'danger'
+    });
+
+    if (!confirmed) {
       return;
     }
+
     this.venteService.delete(vente.id).subscribe({
       next: () => {
         this.notificationService.success('Vente supprimée avec succès');
