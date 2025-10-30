@@ -34,6 +34,7 @@ export interface LoginRequest {
 
 /**
  * Réponse d'authentification (login ou register)
+ * Note: Le token est null car il est maintenant stocké dans un cookie HttpOnly
  */
 export interface AuthResponse {
   role: string | undefined;
@@ -42,15 +43,15 @@ export interface AuthResponse {
   nom: string;
   id: number;
   user: User;
-  token: string;
+  token: string | null;  // Nullable car maintenant dans cookie HttpOnly
   message?: string;
 }
 
 /**
  * État d'authentification stocké
+ * Note: Le token n'est plus stocké côté frontend (cookie HttpOnly)
  */
 export interface AuthState {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
 }

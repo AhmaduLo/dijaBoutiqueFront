@@ -88,7 +88,7 @@ export class LoginComponent {
 
     this.authService.login(credentials).subscribe({
       next: (response) => {
-        this.notificationService.success(`Bienvenue `);
+        this.notificationService.success(`Bienvenue ${response.user.prenom} !`);
         this.router.navigate(['/dashboard']);
         this.isSubmitting = false;
       },

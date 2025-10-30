@@ -121,8 +121,17 @@ export class HeaderComponent implements OnInit {
     });
 
     if (confirmed) {
-      this.authService.logout();
-      this.router.navigate(['/login']);
+      // Appeler l'endpoint backend pour supprimer le cookie HttpOnly
+      this.authService.logout().subscribe({
+        next: () => {
+          this.router.navigate(['/login']);
+        },
+        error: (error) => {
+          console.error('Erreur lors de la déconnexion:', error);
+          // Même en cas d'erreur, rediriger vers login
+          this.router.navigate(['/login']);
+        }
+      });
     }
   }
 }

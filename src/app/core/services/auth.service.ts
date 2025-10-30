@@ -5,14 +5,14 @@ import { User, LoginRequest, RegisterRequest, AuthResponse } from '../models/aut
 
 /**
  * Service d'authentification
- * Gère l'inscription, la connexion, la déconnexion et le stockage du token
+ * Gère l'inscription, la connexion, la déconnexion
+ * Note: Le JWT est maintenant stocké dans un cookie HttpOnly pour plus de sécurité
  */
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private readonly API_URL = 'http://localhost:8080/api/auth';
-  private readonly TOKEN_KEY = 'dija_auth_token';
   private readonly USER_KEY = 'dija_user';
 
   // État d'authentification observable
@@ -23,9 +23,11 @@ export class AuthService {
 
   /**
    * Vérifie si l'utilisateur est connecté
+   * Note: Vérifie simplement si un utilisateur est en mémoire
+   * Le JWT est maintenant dans un cookie HttpOnly géré automatiquement par le navigateur
    */
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    return !!this.getCurrentUser();
   }
 
   /**
@@ -44,13 +46,6 @@ export class AuthService {
   }
 
   /**
-   * Récupère le token d'authentification
-   */
-  getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
-  }
-
-  /**
    * Vérifie si l'utilisateur courant est un ADMIN
    */
   isAdmin(): boolean {
@@ -60,6 +55,7 @@ export class AuthService {
 
   /**
    * Inscription d'un nouvel utilisateur
+   * Note: withCredentials est ajouté automatiquement par l'intercepteur
    */
   register(data: RegisterRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.API_URL}/register`, data).pipe(
@@ -69,6 +65,7 @@ export class AuthService {
 
   /**
    * Connexion d'un utilisateur
+   * Note: withCredentials est ajouté automatiquement par l'intercepteur
    */
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.API_URL}/login`, credentials).pipe(
@@ -78,11 +75,18 @@ export class AuthService {
 
   /**
    * Déconnexion
+   * Appelle l'endpoint backend pour supprimer le cookie HttpOnly
    */
-  logout(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
-    this.currentUserSubject.next(null);
+  logout(): Observable<string> {
+    return this.http.post(`${this.API_URL}/logout`, {}, {
+      responseType: 'text'  // Le backend renvoie du texte brut, pas du JSON
+    }).pipe(
+      tap(() => {
+        // Nettoyer le localStorage et réinitialiser l'état
+        localStorage.removeItem(this.USER_KEY);
+        this.currentUserSubject.next(null);
+      })
+    );
   }
 
   /**
@@ -99,11 +103,12 @@ export class AuthService {
   }
 
   /**
-   * Gère la réponse d'authentification (stockage token + user)
+   * Gère la réponse d'authentification (stockage user uniquement)
+   * Note: Le token n'est plus stocké ici, il est dans un cookie HttpOnly
    */
   private handleAuthResponse(response: AuthResponse): void {
-    if (response.token && response.user) {
-      localStorage.setItem(this.TOKEN_KEY, response.token);
+    if (response.user) {
+      // Stocker uniquement les infos utilisateur, pas le token
       localStorage.setItem(this.USER_KEY, JSON.stringify(response.user));
       this.currentUserSubject.next(response.user);
     }
