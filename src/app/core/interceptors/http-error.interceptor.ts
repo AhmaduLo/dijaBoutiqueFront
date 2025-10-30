@@ -1,11 +1,14 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
 import { inject } from '@angular/core';
+import { PlanService } from '../services/plan.service';
 
 /**
  * Intercepteur pour gérer les erreurs HTTP de manière centralisée
  */
 export const httpErrorInterceptor: HttpInterceptorFn = (req, next) => {
+  const planService = inject(PlanService);
+
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       let errorMessage = '';
@@ -14,6 +17,16 @@ export const httpErrorInterceptor: HttpInterceptorFn = (req, next) => {
         // Erreur côté client
         errorMessage = `Erreur: ${error.error.message}`;
       } else {
+        // Vérifier si c'est une erreur de limite d'utilisateurs
+        if (planService.isUserLimitError(error)) {
+          const userLimitError = planService.extractUserLimitError(error);
+          if (userLimitError) {
+            planService.setUserLimitError(userLimitError);
+            // Retourner l'erreur originale pour que le composant puisse la gérer
+            return throwError(() => error);
+          }
+        }
+
         // Erreur côté serveur
         switch (error.status) {
           case 400:

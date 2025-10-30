@@ -86,6 +86,19 @@ export class AuthService {
   }
 
   /**
+   * Recharge les informations de l'utilisateur actuel
+   * Utile après modification de l'entreprise pour mettre à jour le header
+   */
+  refreshCurrentUser(): void {
+    const user = this.getUserFromStorage();
+    if (user) {
+      // Faire un appel API pour récupérer les infos à jour
+      // Pour l'instant, on force juste un reload depuis le storage
+      this.currentUserSubject.next({...user});
+    }
+  }
+
+  /**
    * Gère la réponse d'authentification (stockage token + user)
    */
   private handleAuthResponse(response: AuthResponse): void {

@@ -20,6 +20,12 @@
       (click)="switchTab('currencies')">
       💰 Devises
     </button>
+    <button
+      class="tab"
+      [class.active]="activeTab === 'company'"
+      (click)="switchTab('company')">
+      🏢 Mon Entreprise
+    </button>
   </div>
 
   <!-- SECTION UTILISATEURS -->
@@ -90,6 +96,11 @@
         </div>
 
         <div class="form-group">
+          <label>Numéro de téléphone</label>
+          <input type="tel" formControlName="numeroTelephone" placeholder="Ex: +221 77 123 45 67" />
+        </div>
+
+        <div class="form-group">
           <label>Mot de passe {{ isEditing ? '(laisser vide si inchangé)' : '*' }}</label>
           <div class="password-input">
             <input
@@ -154,6 +165,8 @@
         <tr>
           <th>Utilisateur</th>
           <th>Email</th>
+          <th>Entreprise</th>
+          <th>Téléphone</th>
           <th>Rôle</th>
           <th>Actions</th>
         </tr>
@@ -167,6 +180,14 @@
             </div>
           </td>
           <td>{{ user.email }}</td>
+          <td>
+            <span class="text-muted" *ngIf="!user.nomEntreprise">-</span>
+            <span *ngIf="user.nomEntreprise">{{ user.nomEntreprise }}</span>
+          </td>
+          <td>
+            <span class="text-muted" *ngIf="!user.numeroTelephone">-</span>
+            <span *ngIf="user.numeroTelephone">{{ user.numeroTelephone }}</span>
+          </td>
           <td>
             <span class="role-badge" [style.background-color]="getRoleColor(user.role)">
               {{ getRoleIcon(user.role) }} {{ getRoleLabel(user.role) }}
@@ -364,4 +385,75 @@
     </div>
   </div>
   <!-- FIN SECTION DEVISES -->
+
+  <!-- SECTION MON ENTREPRISE -->
+  <div *ngIf="activeTab === 'company'">
+    <!-- Chargement -->
+    <div class="loading" *ngIf="isLoadingTenant">
+      <div class="spinner"></div>
+      <p>Chargement des informations de l'entreprise...</p>
+    </div>
+
+    <!-- Informations de l'entreprise -->
+    <div class="company-section" *ngIf="!isLoadingTenant && tenant" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+      <div class="company-card" style="background: white; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 3px solid #f3f4f6;">
+          <h2 style="margin: 0; font-size: 1.75rem; color: #1f2937; font-weight: 700;">🏢 Informations de l'entreprise</h2>
+          <button class="btn btn-primary" *ngIf="!isEditingTenant" (click)="startEditingTenant()" style="background: #e91e63; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+            ✏️ Modifier
+          </button>
+        </div>
+
+        <!-- Mode lecture -->
+        <div class="company-info" *ngIf="!isEditingTenant" style="display: grid; gap: 2rem;">
+          <div class="info-row" style="display: flex; flex-direction: column;">
+            <label style="font-weight: 600; color: #6b7280; margin-bottom: 0.75rem; font-size: 0.875rem; text-transform: uppercase;">Nom de l'entreprise :</label>
+            <p style="margin: 0; font-size: 1.25rem; color: #1f2937; padding: 1rem 1.25rem; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 10px; border-left: 4px solid #e91e63; font-weight: 500;">{{ tenant.nomEntreprise }}</p>
+          </div>
+          <div class="info-row" style="display: flex; flex-direction: column;">
+            <label style="font-weight: 600; color: #6b7280; margin-bottom: 0.75rem; font-size: 0.875rem; text-transform: uppercase;">Numéro de téléphone :</label>
+            <p style="margin: 0; font-size: 1.25rem; color: #1f2937; padding: 1rem 1.25rem; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 10px; border-left: 4px solid #e91e63; font-weight: 500;">{{ tenant.numeroTelephone }}</p>
+          </div>
+          <div class="info-row" style="display: flex; flex-direction: column;">
+            <label style="font-weight: 600; color: #6b7280; margin-bottom: 0.75rem; font-size: 0.875rem; text-transform: uppercase;">Identifiant unique (UUID) :</label>
+            <p class="uuid" style="margin: 0; font-family: 'Courier New', monospace; font-size: 0.95rem; color: #6b7280; padding: 1rem 1.25rem; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 10px; border-left: 4px solid #3b82f6; word-break: break-all;">{{ tenant.tenantUuid }}</p>
+          </div>
+        </div>
+
+        <!-- Mode édition -->
+        <form [formGroup]="tenantForm" (ngSubmit)="onSubmitTenant()" *ngIf="isEditingTenant">
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; font-size: 0.95rem;">Nom de l'entreprise *</label>
+            <input type="text" formControlName="nomEntreprise" placeholder="Ex: Boutique Dija" style="width: 100%; padding: 0.875rem 1rem; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 1rem; font-family: inherit;" />
+            <div class="error" *ngIf="tenantForm.get('nomEntreprise')?.invalid && tenantForm.get('nomEntreprise')?.touched" style="color: #dc2626; font-size: 0.875rem; margin-top: 0.5rem;">
+              Le nom de l'entreprise est requis
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; font-size: 0.95rem;">Numéro de téléphone *</label>
+            <input type="tel" formControlName="numeroTelephone" placeholder="Ex: +221 77 123 45 67" style="width: 100%; padding: 0.875rem 1rem; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 1rem; font-family: inherit;" />
+            <div class="error" *ngIf="tenantForm.get('numeroTelephone')?.invalid && tenantForm.get('numeroTelephone')?.touched" style="color: #dc2626; font-size: 0.875rem; margin-top: 0.5rem;">
+              Le numéro de téléphone est requis
+            </div>
+          </div>
+
+          <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid #f3f4f6;">
+            <button type="button" class="btn btn-secondary" (click)="cancelEditingTenant()" style="flex: 1; padding: 0.875rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; background: #f3f4f6; color: #6b7280; border: 2px solid #e5e7eb;">
+              Annuler
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="tenantForm.invalid || isSubmitting" style="flex: 1; padding: 0.875rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; background: #e91e63; color: white; border: none;" [style.opacity]="(tenantForm.invalid || isSubmitting) ? '0.5' : '1'" [style.cursor]="(tenantForm.invalid || isSubmitting) ? 'not-allowed' : 'pointer'">
+              {{ isSubmitting ? 'Enregistrement...' : 'Enregistrer' }}
+            </button>
+          </div>
+        </form>
+
+        <div class="info-message" style="margin-top: 2.5rem; padding: 1.25rem; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-left: 4px solid #3b82f6; border-radius: 10px;">
+          <p style="margin: 0.5rem 0; color: #1e40af; font-size: 0.9rem; line-height: 1.6;"><strong style="display: block; margin-bottom: 0.5rem; font-size: 1rem;">ℹ️ Note importante :</strong></p>
+          <p style="margin: 0.5rem 0; color: #1e40af; font-size: 0.9rem; line-height: 1.6;">La modification du nom de l'entreprise met à jour automatiquement l'information pour tous les utilisateurs de votre entreprise.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- FIN SECTION MON ENTREPRISE -->
 </div>

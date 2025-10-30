@@ -14,6 +14,8 @@ export interface Utilisateur {
   nom: string;
   prenom: string;
   email: string;
+  nomEntreprise?: string;
+  numeroTelephone?: string;
   role: UserRole;
   motDePasse?: string; // Seulement pour la création/modification
   dateCreation?: string;
@@ -27,6 +29,7 @@ export interface CreateUtilisateurDto {
   nom: string;
   prenom: string;
   email: string;
+  numeroTelephone?: string;
   motDePasse: string;
   role: UserRole;
 }
@@ -38,6 +41,7 @@ export interface UpdateUtilisateurDto {
   nom?: string;
   prenom?: string;
   email?: string;
+  numeroTelephone?: string;
   motDePasse?: string;
 }
 

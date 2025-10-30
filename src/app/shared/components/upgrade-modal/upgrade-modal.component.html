@@ -1,0 +1,70 @@
+<div class="modal-overlay" *ngIf="isVisible" (click)="close()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <button class="close-button" (click)="close()">&times;</button>
+
+    <div class="modal-header">
+      <div class="icon-container">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <line x1="19" y1="8" x2="19" y2="14"></line>
+          <line x1="22" y1="11" x2="16" y2="11"></line>
+        </svg>
+      </div>
+      <h2>Limite d'utilisateurs atteinte</h2>
+    </div>
+
+    <div class="modal-body">
+      <div class="error-message">
+        <p class="message-text">{{ userLimitError?.message }}</p>
+        <div class="stats">
+          <div class="stat-item">
+            <span class="stat-label">Utilisateurs actuels :</span>
+            <span class="stat-value">{{ userLimitError?.currentCount }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Limite du plan {{ currentPlan?.displayName }} :</span>
+            <span class="stat-value">{{ userLimitError?.maxAllowed }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="upgrade-section" *ngIf="nextPlan">
+        <h3>Passez au plan {{ nextPlan.displayName }}</h3>
+        <div class="plan-details">
+          <div class="plan-info">
+            <div class="plan-price">
+              <span class="price" *ngIf="nextPlan.price > 0">{{ nextPlan.price }} FCFA</span>
+              <span class="price" *ngIf="nextPlan.price === 0">Sur devis</span>
+              <span class="period" *ngIf="nextPlan.price > 0">/mois</span>
+            </div>
+            <ul class="features-list">
+              <li *ngFor="let feature of nextPlan.features">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                {{ feature }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="no-upgrade-section" *ngIf="!nextPlan">
+        <p>Vous êtes déjà au plan maximum. Contactez-nous pour des solutions personnalisées.</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="onViewPlans()">
+        Voir tous les plans
+      </button>
+      <button class="btn btn-primary" (click)="onUpgrade()" *ngIf="nextPlan">
+        Passer au plan {{ nextPlan.displayName }}
+      </button>
+      <button class="btn btn-secondary" (click)="close()" *ngIf="!nextPlan">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>

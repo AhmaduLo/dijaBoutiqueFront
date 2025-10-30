@@ -15,8 +15,9 @@ import { User } from '../../../core/models/auth.model';
     <header class="header">
       <div class="header-content">
         <div class="logo">
-          <h1>✨ Dija Boutique</h1>
-          <p class="subtitle">Gestion d'accessoires féminins</p>
+          <h1>✨ {{ getCompanyName() }}</h1>
+          <p class="subtitle" *ngIf="isAuthenticated">Gestion commerciale</p>
+          <p class="subtitle" *ngIf="!isAuthenticated">Gestion d'accessoires féminins</p>
         </div>
         <nav class="nav-menu" *ngIf="isAuthenticated">
           <a routerLink="/dashboard" routerLinkActive="active">
@@ -99,9 +100,16 @@ export class HeaderComponent implements OnInit {
     return this.authService.isAdmin();
   }
 
+  getCompanyName(): string {
+    if (this.isAuthenticated && this.currentUser?.nomEntreprise) {
+      return this.currentUser.nomEntreprise;
+    }
+    return 'Dija Boutique';
+  }
+
   logout(): void {
     this.closeUserMenu();
-    if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    if (confirm('Êtes-vous sûr de vouloir vous déconnexter ?')) {
       this.authService.logout();
       this.router.navigate(['/login']);
     }

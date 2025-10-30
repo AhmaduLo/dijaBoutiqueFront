@@ -6,6 +6,8 @@ import { AdminService } from '../../core/services/admin.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CurrencyService } from '../../core/services/currency.service';
+import { TenantService } from '../../core/services/tenant.service';
+import { PlanService } from '../../core/services/plan.service';
 import { User } from '../../core/models/auth.model';
 import {
   Utilisateur,
@@ -14,6 +16,7 @@ import {
   UserRole
 } from '../../core/models/admin.model';
 import { Currency, CreateCurrencyDto, DEVISES_COMMUNES } from '../../core/models/currency.model';
+import { Tenant, UpdateTenantDto } from '../../core/models/tenant.model';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -24,7 +27,7 @@ import { Currency, CreateCurrencyDto, DEVISES_COMMUNES } from '../../core/models
 })
 export class AdminDashboardComponent implements OnInit {
   // Onglets
-  activeTab: 'users' | 'currencies' = 'users';
+  activeTab: 'users' | 'currencies' | 'company' = 'users';
 
   // Utilisateurs
   utilisateurs: Utilisateur[] = [];
@@ -52,12 +55,20 @@ export class AdminDashboardComponent implements OnInit {
   searchCurrency = '';
   devisesCommunes = DEVISES_COMMUNES;
 
+  // Entreprise
+  tenant?: Tenant;
+  tenantForm: FormGroup;
+  isEditingTenant = false;
+  isLoadingTenant = false;
+
   constructor(
     private fb: FormBuilder,
     private adminService: AdminService,
     private authService: AuthService,
     private currencyService: CurrencyService,
-    private notificationService: NotificationService
+    private tenantService: TenantService,
+    private notificationService: NotificationService,
+    private planService: PlanService
   ) {
     this.currentUser = this.authService.getCurrentUser() || undefined;
 
@@ -65,6 +76,7 @@ export class AdminDashboardComponent implements OnInit {
       nom: ['', Validators.required],
       prenom: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
+      numeroTelephone: [''],
       motDePasse: ['', [Validators.required, Validators.minLength(6)]],
       role: [UserRole.USER, Validators.required]
     });
@@ -76,6 +88,11 @@ export class AdminDashboardComponent implements OnInit {
       pays: ['', Validators.required],
       tauxChange: [1, [Validators.required, Validators.min(0.001)]],
       isDefault: [false]
+    });
+
+    this.tenantForm = this.fb.group({
+      nomEntreprise: ['', Validators.required],
+      numeroTelephone: ['', Validators.required]
     });
   }
 
@@ -183,7 +200,11 @@ export class AdminDashboardComponent implements OnInit {
           this.isSubmitting = false;
         },
         error: (error) => {
-          this.notificationService.error(error.error?.message || 'Erreur lors de la création');
+          // Ne pas afficher de notification si c'est une erreur de limite d'utilisateurs
+          // Le modal s'affichera automatiquement via l'intercepteur
+          if (!this.planService.isUserLimitError(error)) {
+            this.notificationService.error(error.error?.message || 'Erreur lors de la création');
+          }
           this.isSubmitting = false;
         }
       });
@@ -192,6 +213,7 @@ export class AdminDashboardComponent implements OnInit {
 
   editUser(user: Utilisateur): void {
     if (!user.id) return;
+    console.log('Utilisateur à modifier:', user); // Debug: voir les données reçues
     this.isEditing = true;
     this.currentUserId = user.id;
     this.showForm = true;
@@ -199,6 +221,7 @@ export class AdminDashboardComponent implements OnInit {
       nom: user.nom,
       prenom: user.prenom,
       email: user.email,
+      numeroTelephone: user.numeroTelephone || '',
       role: user.role
     });
     this.userForm.get('motDePasse')?.clearValidators();
@@ -263,10 +286,13 @@ export class AdminDashboardComponent implements OnInit {
 
   // ==================== GESTION DES DEVISES ====================
 
-  switchTab(tab: 'users' | 'currencies'): void {
+  switchTab(tab: 'users' | 'currencies' | 'company'): void {
     this.activeTab = tab;
     if (tab === 'currencies' && this.currencies.length === 0) {
       this.loadCurrencies();
+    }
+    if (tab === 'company' && !this.tenant) {
+      this.loadTenant();
     }
   }
 
@@ -421,6 +447,79 @@ export class AdminDashboardComponent implements OnInit {
       },
       error: (error) => {
         this.notificationService.error(error.error?.message || 'Erreur lors du changement');
+      }
+    });
+  }
+
+  // ==================== GESTION DE L'ENTREPRISE ====================
+
+  loadTenant(): void {
+    this.isLoadingTenant = true;
+    this.tenantService.getCurrentTenant().subscribe({
+      next: (tenant) => {
+        this.tenant = tenant;
+        this.tenantForm.patchValue({
+          nomEntreprise: tenant.nomEntreprise,
+          numeroTelephone: tenant.numeroTelephone
+        });
+        this.isLoadingTenant = false;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement de l\'entreprise:', error);
+        this.notificationService.error('Erreur lors du chargement des informations de l\'entreprise');
+        this.isLoadingTenant = false;
+      }
+    });
+  }
+
+  startEditingTenant(): void {
+    this.isEditingTenant = true;
+  }
+
+  cancelEditingTenant(): void {
+    this.isEditingTenant = false;
+    if (this.tenant) {
+      this.tenantForm.patchValue({
+        nomEntreprise: this.tenant.nomEntreprise,
+        numeroTelephone: this.tenant.numeroTelephone
+      });
+    }
+  }
+
+  onSubmitTenant(): void {
+    if (this.tenantForm.invalid) {
+      Object.keys(this.tenantForm.controls).forEach(key => {
+        this.tenantForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    this.isSubmitting = true;
+    const formValue = this.tenantForm.getRawValue();
+    const updateData: UpdateTenantDto = {
+      nomEntreprise: formValue.nomEntreprise,
+      numeroTelephone: formValue.numeroTelephone
+    };
+
+    this.tenantService.updateTenant(updateData).subscribe({
+      next: (tenant) => {
+        this.tenant = tenant;
+        this.notificationService.success('Informations de l\'entreprise modifiées avec succès');
+        this.isEditingTenant = false;
+        this.isSubmitting = false;
+
+        // Mettre à jour le nom de l'entreprise dans le localStorage
+        const currentUser = this.authService.getCurrentUser();
+        if (currentUser) {
+          currentUser.nomEntreprise = tenant.nomEntreprise;
+          currentUser.numeroTelephone = tenant.numeroTelephone;
+          localStorage.setItem('dija_user', JSON.stringify(currentUser));
+          this.authService.refreshCurrentUser();
+        }
+      },
+      error: (error) => {
+        this.notificationService.error(error.error?.message || 'Erreur lors de la modification');
+        this.isSubmitting = false;
       }
     });
   }
