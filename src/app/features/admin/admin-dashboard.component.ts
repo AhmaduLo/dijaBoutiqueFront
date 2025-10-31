@@ -139,18 +139,36 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   openForm(): void {
-    this.showForm = true;
     this.isEditing = false;
-    this.userForm.reset({ role: UserRole.USER });
-    this.userForm.get('motDePasse')?.setValidators([Validators.required, Validators.minLength(6)]);
-    this.userForm.get('motDePasse')?.updateValueAndValidity();
+    this.currentUserId = undefined;
+
+    // Recréer complètement le formulaire pour éviter les valeurs résiduelles
+    this.userForm = this.fb.group({
+      nom: ['', Validators.required],
+      prenom: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      numeroTelephone: [''],
+      motDePasse: ['', [Validators.required, Validators.minLength(6)]],
+      role: [UserRole.USER, Validators.required]
+    });
+
+    this.showForm = true;
   }
 
   closeForm(): void {
     this.showForm = false;
     this.isEditing = false;
     this.currentUserId = undefined;
-    this.userForm.reset();
+
+    // Recréer le formulaire vide
+    this.userForm = this.fb.group({
+      nom: ['', Validators.required],
+      prenom: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      numeroTelephone: [''],
+      motDePasse: ['', [Validators.required, Validators.minLength(6)]],
+      role: [UserRole.USER, Validators.required]
+    });
   }
 
   generatePassword(): void {

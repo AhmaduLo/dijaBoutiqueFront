@@ -5,7 +5,11 @@
       "Bash(timeout /t 10)",
       "Bash(npm run start:*)",
       "Bash(netstat:*)",
-      "Bash(npm audit fix:*)"
+      "Bash(npm audit fix:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd /c \"taskkill /PID 10108 /F\")",
+      "Bash(findstr:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []
