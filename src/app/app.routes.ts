@@ -18,6 +18,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/register.component').then(m => m.RegisterComponent),
     canActivate: [guestGuard]
   },
+  {
+    path: 'forgot-password',
+    loadComponent: () => import('./features/auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent),
+    canActivate: [guestGuard]
+  },
+  {
+    path: 'reset-password/:token',
+    loadComponent: () => import('./features/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent),
+    canActivate: [guestGuard]
+  },
   // Routes protégées (nécessitent une authentification)
   {
     path: 'dashboard',

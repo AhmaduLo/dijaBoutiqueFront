@@ -40,6 +40,10 @@ import { LoginRequest } from '../../core/models/auth.model';
             </div>
           </div>
 
+          <div class="forgot-password-link">
+            <a routerLink="/forgot-password">Mot de passe oublié ?</a>
+          </div>
+
           <button type="submit" class="btn btn-primary btn-full" [disabled]="loginForm.invalid || isSubmitting">
             {{ isSubmitting ? 'Connexion...' : 'Se connecter' }}
           </button>

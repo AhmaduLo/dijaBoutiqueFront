@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { User, LoginRequest, RegisterRequest, AuthResponse } from '../models/auth.model';
+import { ForgotPasswordRequest, ResetPasswordRequest, PasswordResetResponse } from '../models/password-reset.model';
 
 /**
  * Service d'authentification
@@ -100,6 +101,21 @@ export class AuthService {
       // Pour l'instant, on force juste un reload depuis le storage
       this.currentUserSubject.next({...user});
     }
+  }
+
+  /**
+   * Demande de réinitialisation du mot de passe
+   * Envoie un email avec un lien de réinitialisation
+   */
+  forgotPassword(request: ForgotPasswordRequest): Observable<PasswordResetResponse> {
+    return this.http.post<PasswordResetResponse>(`${this.API_URL}/forgot-password`, request);
+  }
+
+  /**
+   * Réinitialise le mot de passe avec le token reçu par email
+   */
+  resetPassword(request: ResetPasswordRequest): Observable<PasswordResetResponse> {
+    return this.http.post<PasswordResetResponse>(`${this.API_URL}/reset-password`, request);
   }
 
   /**
