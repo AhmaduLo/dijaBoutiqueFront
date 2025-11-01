@@ -7,6 +7,7 @@ import { RapportComplet, TypeRapport, FiltreRapport } from '../../core/models/ra
 import { MetricCardComponent } from '../../shared/components/metric-card/metric-card.component';
 import { CurrencyService } from '../../core/services/currency.service';
 import { Currency } from '../../core/models/currency.model';
+import { ExportService } from '../../core/services/export.service';
 
 /**
  * Composant de génération et visualisation de rapports
@@ -23,6 +24,9 @@ import { Currency } from '../../core/models/currency.model';
           <p class="subtitle">Analyse détaillée de votre activité</p>
         </div>
         <div class="actions">
+          <button class="btn btn-success" (click)="exporterExcel()" [disabled]="!rapportGenere || isLoading">
+            📊 Exporter Excel
+          </button>
           <button class="btn btn-primary" (click)="exporterPDF()" [disabled]="!rapportGenere || isLoading">
             📑 Exporter PDF
           </button>
@@ -315,7 +319,8 @@ export class RapportsComponent implements OnInit {
   constructor(
     private rapportService: RapportService,
     private notificationService: NotificationService,
-    private currencyService: CurrencyService
+    private currencyService: CurrencyService,
+    private exportService: ExportService
   ) {}
 
   ngOnInit(): void {
@@ -386,11 +391,116 @@ export class RapportsComponent implements OnInit {
     });
   }
 
+  /**
+   * Export du rapport en PDF avec informations de l'entreprise
+   */
   exporterPDF(): void {
     if (!this.rapport) return;
-    const nomFichier = `rapport_${this.typeRapport}_${new Date().toISOString().split('T')[0]}.pdf`;
-    this.rapportService.exporterPDF(this.rapport, nomFichier);
-    this.notificationService.success('Rapport exporté en PDF');
+
+    // Préparer les données de la période pour l'export
+    const periodeData = [{
+      'Période': `${this.rapport.periode.dateDebut} - ${this.rapport.periode.dateFin}`,
+      'Chiffre d\'Affaires': this.rapport.periode.chiffreAffaires,
+      'Total Achats': this.rapport.periode.totalAchats,
+      'Total Dépenses': this.rapport.periode.totalDepenses,
+      'Bénéfice Net': this.rapport.periode.beneficeNet,
+      'Marge Brute (%)': this.rapport.periode.margeBrute.toFixed(2),
+      'Marge Nette (%)': this.rapport.periode.margeNette.toFixed(2),
+      'Nombre Achats': this.rapport.periode.nombreAchats,
+      'Nombre Ventes': this.rapport.periode.nombreVentes,
+      'Nombre Dépenses': this.rapport.periode.nombreDepenses
+    }];
+
+    const columns = [
+      { header: 'Période', field: 'Période' },
+      { header: `CA (${this.defaultCurrency?.symbole || 'CFA'})`, field: 'Chiffre d\'Affaires', format: (val: number) => val.toFixed(2) },
+      { header: `Achats (${this.defaultCurrency?.symbole || 'CFA'})`, field: 'Total Achats', format: (val: number) => val.toFixed(2) },
+      { header: `Dépenses (${this.defaultCurrency?.symbole || 'CFA'})`, field: 'Total Dépenses', format: (val: number) => val.toFixed(2) },
+      { header: `Bénéfice (${this.defaultCurrency?.symbole || 'CFA'})`, field: 'Bénéfice Net', format: (val: number) => val.toFixed(2) },
+      { header: 'Marge Brute (%)', field: 'Marge Brute (%)' },
+      { header: 'Marge Nette (%)', field: 'Marge Nette (%)' },
+      { header: 'Nb Achats', field: 'Nombre Achats' },
+      { header: 'Nb Ventes', field: 'Nombre Ventes' },
+      { header: 'Nb Dépenses', field: 'Nombre Dépenses' }
+    ];
+
+    const nomFichier = `rapport_${this.typeRapport}_${new Date().toISOString().split('T')[0]}`;
+
+    const exportOptions = {
+      filename: nomFichier,
+      title: `Rapport ${this.typeRapport.charAt(0).toUpperCase() + this.typeRapport.slice(1)}`,
+      columns,
+      data: periodeData,
+      dateRange: {
+        dateDebut: this.rapport.periode.dateDebut,
+        dateFin: this.rapport.periode.dateFin
+      },
+      companyInfo: {
+        nom: 'Boutique Dija Saliou',
+        proprietaire: 'Saliou Dija',
+        telephone: '+221 XX XXX XX XX',
+        adresse: 'Dakar, Sénégal'
+      }
+    };
+
+    this.exportService.exportToPDF(exportOptions);
+    this.notificationService.success('Rapport exporté en PDF avec succès');
+  }
+
+  /**
+   * Export du rapport en Excel avec informations de l'entreprise
+   */
+  exporterExcel(): void {
+    if (!this.rapport) return;
+
+    // Préparer les données de la période pour l'export
+    const periodeData = [{
+      'Période': `${this.rapport.periode.dateDebut} - ${this.rapport.periode.dateFin}`,
+      'Chiffre d\'Affaires': this.rapport.periode.chiffreAffaires,
+      'Total Achats': this.rapport.periode.totalAchats,
+      'Total Dépenses': this.rapport.periode.totalDepenses,
+      'Bénéfice Net': this.rapport.periode.beneficeNet,
+      'Marge Brute (%)': this.rapport.periode.margeBrute.toFixed(2),
+      'Marge Nette (%)': this.rapport.periode.margeNette.toFixed(2),
+      'Nombre Achats': this.rapport.periode.nombreAchats,
+      'Nombre Ventes': this.rapport.periode.nombreVentes,
+      'Nombre Dépenses': this.rapport.periode.nombreDepenses
+    }];
+
+    const columns = [
+      { header: 'Période', field: 'Période' },
+      { header: `CA (${this.defaultCurrency?.symbole || 'CFA'})`, field: 'Chiffre d\'Affaires', format: (val: number) => val.toFixed(2) },
+      { header: `Achats (${this.defaultCurrency?.symbole || 'CFA'})`, field: 'Total Achats', format: (val: number) => val.toFixed(2) },
+      { header: `Dépenses (${this.defaultCurrency?.symbole || 'CFA'})`, field: 'Total Dépenses', format: (val: number) => val.toFixed(2) },
+      { header: `Bénéfice (${this.defaultCurrency?.symbole || 'CFA'})`, field: 'Bénéfice Net', format: (val: number) => val.toFixed(2) },
+      { header: 'Marge Brute (%)', field: 'Marge Brute (%)' },
+      { header: 'Marge Nette (%)', field: 'Marge Nette (%)' },
+      { header: 'Nb Achats', field: 'Nombre Achats' },
+      { header: 'Nb Ventes', field: 'Nombre Ventes' },
+      { header: 'Nb Dépenses', field: 'Nombre Dépenses' }
+    ];
+
+    const nomFichier = `rapport_${this.typeRapport}_${new Date().toISOString().split('T')[0]}`;
+
+    const exportOptions = {
+      filename: nomFichier,
+      title: `Rapport ${this.typeRapport.charAt(0).toUpperCase() + this.typeRapport.slice(1)}`,
+      columns,
+      data: periodeData,
+      dateRange: {
+        dateDebut: this.rapport.periode.dateDebut,
+        dateFin: this.rapport.periode.dateFin
+      },
+      companyInfo: {
+        nom: 'Boutique Dija Saliou',
+        proprietaire: 'Saliou Dija',
+        telephone: '+221 XX XXX XX XX',
+        adresse: 'Dakar, Sénégal'
+      }
+    };
+
+    this.exportService.exportToExcel(exportOptions);
+    this.notificationService.success('Rapport exporté en Excel avec succès');
   }
 
   exporterCSV(): void {
