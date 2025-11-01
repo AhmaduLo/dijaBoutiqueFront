@@ -270,6 +270,15 @@ export class DashboardComponent implements OnInit {
    * Charge toutes les métriques
    */
   loadMetrics(): void {
+    // Utiliser les dates personnalisées si le mode custom est actif
+    if (this.selectedPeriod === 'custom') {
+      if (!this.customDateDebut || !this.customDateFin) {
+        return; // Attendre que les deux dates soient sélectionnées
+      }
+      this.dateDebut = this.customDateDebut;
+      this.dateFin = this.customDateFin;
+    }
+
     if (!this.dateDebut || !this.dateFin) {
       return;
     }
