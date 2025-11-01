@@ -9,7 +9,10 @@
       "Bash(taskkill:*)",
       "Bash(cmd /c \"taskkill /PID 10108 /F\")",
       "Bash(findstr:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(npm install:*)",
+      "Bash(cmd /c \"taskkill /PID 41668 /F\")",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []

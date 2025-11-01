@@ -11,6 +11,7 @@ import { StockDto } from '../../core/models/stock.model';
 import { CurrencyService } from '../../core/services/currency.service';
 import { Currency } from '../../core/models/currency.model';
 import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
+import { ExportService } from '../../core/services/export.service';
 
 /**
  * Composant de gestion des achats de stock
@@ -23,9 +24,62 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
     <div class="achats">
       <div class="page-header">
         <h1>🛒 Gestion des Achats</h1>
-        <button class="btn btn-primary" (click)="openForm()">
-          + Nouvel achat
-        </button>
+        <div style="display: flex; gap: 1rem;">
+          <button class="btn btn-success" (click)="openExportModal()">
+            📊 Exporter
+          </button>
+          <button class="btn btn-primary" (click)="openForm()">
+            + Nouvel achat
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal d'export -->
+      <div class="modal" *ngIf="showExportModal" (click)="closeExportModal()">
+        <div class="modal-content" style="max-width: 500px;" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2>📊 Exporter les achats</h2>
+            <button class="close-btn" (click)="closeExportModal()">×</button>
+          </div>
+          <div class="modal-body" style="padding: 1.5rem;">
+            <div class="form-group">
+              <label>Date de début (optionnel)</label>
+              <input
+                type="date"
+                [(ngModel)]="exportDateDebut"
+                class="form-control"
+                placeholder="Sélectionner une date"
+              />
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+              <label>Date de fin (optionnel)</label>
+              <input
+                type="date"
+                [(ngModel)]="exportDateFin"
+                class="form-control"
+                placeholder="Sélectionner une date"
+              />
+            </div>
+            <div style="margin-top: 1.5rem; text-align: center; color: #666;">
+              <small>
+                <em>Laissez vide pour exporter tous les achats</em>
+              </small>
+            </div>
+          </div>
+          <div class="modal-footer" style="justify-content: space-between;">
+            <button class="btn btn-secondary" (click)="closeExportModal()">
+              Annuler
+            </button>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn-success" (click)="exportToExcel()">
+                📊 Excel
+              </button>
+              <button class="btn btn-danger" (click)="exportToPDF()">
+                📄 PDF
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Formulaire -->
@@ -214,6 +268,11 @@ export class AchatsComponent implements OnInit {
   searchTerm = '';
   currentAchatId?: number;
 
+  // Export
+  showExportModal = false;
+  exportDateDebut?: string;
+  exportDateFin?: string;
+
   // Devises
   currencies: Currency[] = [];
   selectedCurrency?: Currency;
@@ -225,7 +284,8 @@ export class AchatsComponent implements OnInit {
     private stockService: StockService,
     private currencyService: CurrencyService,
     private notificationService: NotificationService,
-    private confirmService: ConfirmService
+    private confirmService: ConfirmService,
+    private exportService: ExportService
   ) {
     this.achatForm = this.fb.group({
       nomProduit: ['', Validators.required],
@@ -473,5 +533,192 @@ export class AchatsComponent implements OnInit {
 
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('fr-FR');
+  }
+
+  /**
+   * Ouvre le modal d'export
+   */
+  openExportModal(): void {
+    this.showExportModal = true;
+    // Réinitialiser les dates
+    this.exportDateDebut = undefined;
+    this.exportDateFin = undefined;
+  }
+
+  /**
+   * Ferme le modal d'export
+   */
+  closeExportModal(): void {
+    this.showExportModal = false;
+  }
+
+  /**
+   * Export vers Excel avec filtrage par dates
+   */
+  exportToExcel(): void {
+    // Filtrer les achats par dates si spécifiées
+    let dataToExport = [...this.filteredAchats];
+
+    if (this.exportDateDebut) {
+      const dateDebut = new Date(this.exportDateDebut);
+      dataToExport = dataToExport.filter(a => {
+        const dateAchat = new Date(a.dateAchat);
+        return dateAchat >= dateDebut;
+      });
+    }
+
+    if (this.exportDateFin) {
+      const dateFin = new Date(this.exportDateFin);
+      dateFin.setHours(23, 59, 59, 999); // Inclure toute la journée
+      dataToExport = dataToExport.filter(a => {
+        const dateAchat = new Date(a.dateAchat);
+        return dateAchat <= dateFin;
+      });
+    }
+
+    // Vérifier qu'il y a des données à exporter
+    if (dataToExport.length === 0) {
+      this.notificationService.error('Aucune donnée à exporter pour cette période');
+      return;
+    }
+
+    // Préparer les colonnes d'export
+    const columns = [
+      { header: 'Date', field: 'dateAchat', format: (val: string) => this.formatDate(val) },
+      { header: 'Produit', field: 'nomProduit' },
+      { header: 'Fournisseur', field: 'fournisseur' },
+      { header: 'Quantité', field: 'quantite' },
+      {
+        header: `Prix Unitaire (${this.selectedCurrency?.symbole || 'CFA'})`,
+        field: 'prixUnitaire',
+        format: (val: number) => val.toFixed(2)
+      },
+      {
+        header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
+        field: 'prixTotal',
+        format: (val: number) => val.toFixed(2)
+      }
+    ];
+
+    // Créer le nom de fichier avec les dates si applicable
+    let filename = 'achats';
+    if (this.exportDateDebut && this.exportDateFin) {
+      filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+    } else if (this.exportDateDebut) {
+      filename += `_depuis_${this.exportDateDebut}`;
+    } else if (this.exportDateFin) {
+      filename += `_jusqu_au_${this.exportDateFin}`;
+    } else {
+      filename += `_${new Date().toISOString().split('T')[0]}`;
+    }
+
+    // Options d'export
+    const exportOptions = {
+      filename,
+      title: 'Liste des Achats',
+      columns,
+      data: dataToExport,
+      dateRange: {
+        dateDebut: this.exportDateDebut,
+        dateFin: this.exportDateFin
+      },
+      companyInfo: {
+        nom: 'Boutique Dija Saliou',
+        proprietaire: 'Saliou Dija',
+        telephone: '+221 XX XXX XX XX',
+        adresse: 'Dakar, Sénégal'
+      }
+    };
+
+    this.exportService.exportToExcel(exportOptions);
+    this.notificationService.success(`${dataToExport.length} achat(s) exporté(s) avec succès en Excel`);
+
+    // Fermer le modal
+    this.closeExportModal();
+  }
+
+  /**
+   * Export vers PDF avec filtrage par dates
+   */
+  exportToPDF(): void {
+    // Filtrer les achats par dates si spécifiées
+    let dataToExport = [...this.filteredAchats];
+
+    if (this.exportDateDebut) {
+      const dateDebut = new Date(this.exportDateDebut);
+      dataToExport = dataToExport.filter(a => {
+        const dateAchat = new Date(a.dateAchat);
+        return dateAchat >= dateDebut;
+      });
+    }
+
+    if (this.exportDateFin) {
+      const dateFin = new Date(this.exportDateFin);
+      dateFin.setHours(23, 59, 59, 999); // Inclure toute la journée
+      dataToExport = dataToExport.filter(a => {
+        const dateAchat = new Date(a.dateAchat);
+        return dateAchat <= dateFin;
+      });
+    }
+
+    // Vérifier qu'il y a des données à exporter
+    if (dataToExport.length === 0) {
+      this.notificationService.error('Aucune donnée à exporter pour cette période');
+      return;
+    }
+
+    // Préparer les colonnes d'export
+    const columns = [
+      { header: 'Date', field: 'dateAchat', format: (val: string) => this.formatDate(val) },
+      { header: 'Produit', field: 'nomProduit' },
+      { header: 'Fournisseur', field: 'fournisseur' },
+      { header: 'Quantité', field: 'quantite' },
+      {
+        header: `Prix Unit. (${this.selectedCurrency?.symbole || 'CFA'})`,
+        field: 'prixUnitaire',
+        format: (val: number) => val.toFixed(2)
+      },
+      {
+        header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
+        field: 'prixTotal',
+        format: (val: number) => val.toFixed(2)
+      }
+    ];
+
+    // Créer le nom de fichier avec les dates si applicable
+    let filename = 'achats';
+    if (this.exportDateDebut && this.exportDateFin) {
+      filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+    } else if (this.exportDateDebut) {
+      filename += `_depuis_${this.exportDateDebut}`;
+    } else if (this.exportDateFin) {
+      filename += `_jusqu_au_${this.exportDateFin}`;
+    } else {
+      filename += `_${new Date().toISOString().split('T')[0]}`;
+    }
+
+    // Options d'export
+    const exportOptions = {
+      filename,
+      title: 'Liste des Achats',
+      columns,
+      data: dataToExport,
+      dateRange: {
+        dateDebut: this.exportDateDebut,
+        dateFin: this.exportDateFin
+      },
+      companyInfo: {
+        nom: 'Boutique Dija Saliou',
+        proprietaire: 'Saliou Dija',
+        telephone: '+221 XX XXX XX XX',
+        adresse: 'Dakar, Sénégal'
+      }
+    };
+
+    this.exportService.exportToPDF(exportOptions);
+    this.notificationService.success(`${dataToExport.length} achat(s) exporté(s) avec succès en PDF`);
+
+    // Fermer le modal
+    this.closeExportModal();
   }
 }

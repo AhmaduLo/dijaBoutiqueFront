@@ -7,6 +7,7 @@ import { StockDto, ResumeStock, AlerteStock, StatutStock } from '../../core/mode
 import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
 import { CurrencyService } from '../../core/services/currency.service';
 import { Currency } from '../../core/models/currency.model';
+import { ExportService } from '../../core/services/export.service';
 
 /**
  * Composant du dashboard de gestion de stock
@@ -19,9 +20,47 @@ import { Currency } from '../../core/models/currency.model';
     <div class="stock-dashboard">
       <div class="page-header">
         <h1>📦 Gestion du Stock</h1>
-        <button class="btn btn-primary" (click)="refreshData()">
-          🔄 Actualiser
-        </button>
+        <div style="display: flex; gap: 1rem;">
+          <button class="btn btn-success" (click)="openExportModal()">
+            📊 Exporter
+          </button>
+          <button class="btn btn-primary" (click)="refreshData()">
+            🔄 Actualiser
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal d'export -->
+      <div class="modal" *ngIf="showExportModal" (click)="closeExportModal()">
+        <div class="modal-content" style="max-width: 500px;" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2>📊 Exporter le stock</h2>
+            <button class="close-btn" (click)="closeExportModal()">×</button>
+          </div>
+          <div class="modal-body" style="padding: 1.5rem;">
+            <div style="text-align: center; color: #666;">
+              <p style="margin: 0;">
+                Vous allez exporter l'état actuel du stock avec <strong>{{ filteredStocks.length }} produit(s)</strong>.
+              </p>
+              <p style="margin-top: 1rem; font-size: 0.9rem;">
+                💡 L'export inclura tous les produits filtrés selon votre recherche et vos critères actuels.
+              </p>
+            </div>
+          </div>
+          <div class="modal-footer" style="justify-content: space-between;">
+            <button class="btn btn-secondary" (click)="closeExportModal()">
+              Annuler
+            </button>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn-success" (click)="exportToExcel()">
+                📊 Excel
+              </button>
+              <button class="btn btn-danger" (click)="exportToPDF()">
+                📄 PDF
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Cartes de résumé -->
@@ -207,14 +246,18 @@ export class StockDashboardComponent implements OnInit {
   selectedStatut = '';
   sortBy = 'nom';
 
+  // Export
+  showExportModal = false;
+
   // Devise
   defaultCurrency?: Currency;
 
   constructor(
     private stockService: StockService,
     private notificationService: NotificationService,
-    private currencyService: CurrencyService
-  ) {}
+    private currencyService: CurrencyService,
+    private exportService: ExportService
+  ) { }
 
   ngOnInit(): void {
     this.loadCurrency();
@@ -342,5 +385,122 @@ export class StockDashboardComponent implements OnInit {
 
   getStatutIcon(statut: StatutStock): string {
     return this.stockService.getStatutIcon(statut);
+  }
+
+  openExportModal(): void {
+    this.showExportModal = true;
+  }
+
+  closeExportModal(): void {
+    this.showExportModal = false;
+  }
+
+  exportToExcel(): void {
+    // Vérifier qu'il y a des données à exporter
+    if (this.filteredStocks.length === 0) {
+      this.notificationService.error('Aucune donnée à exporter');
+      return;
+    }
+
+    const columns = [
+      { header: 'Produit', field: 'nomProduit' },
+      { header: 'Quantité Achetée', field: 'quantiteAchetee' },
+      { header: 'Quantité Vendue', field: 'quantiteVendue' },
+      { header: 'Stock Disponible', field: 'stockDisponible' },
+      {
+        header: `Prix Moyen Achat (${this.defaultCurrency?.symbole || 'CFA'})`,
+        field: 'prixMoyenAchat',
+        format: (val: number) => val.toFixed(2)
+      },
+      {
+        header: `Prix Moyen Vente (${this.defaultCurrency?.symbole || 'CFA'})`,
+        field: 'prixMoyenVente',
+        format: (val: number) => val.toFixed(2)
+      },
+      {
+        header: `Valeur Stock (${this.defaultCurrency?.symbole || 'CFA'})`,
+        field: 'valeurStock',
+        format: (val: number) => val.toFixed(2)
+      },
+      {
+        header: `Marge Unitaire (${this.defaultCurrency?.symbole || 'CFA'})`,
+        field: 'margeUnitaire',
+        format: (val: number) => val.toFixed(2)
+      },
+      { header: 'Statut', field: 'statut', format: (val: StatutStock) => this.getStatutLabel(val) }
+    ];
+
+    const exportOptions = {
+      filename: `stock_${new Date().toISOString().split('T')[0]}`,
+      title: 'État du Stock',
+      columns,
+      data: this.filteredStocks,
+      companyInfo: {
+        nom: 'Boutique Dija Saliou',
+        proprietaire: 'Saliou Dija',
+        telephone: '+221 XX XXX XX XX',
+        adresse: 'Dakar, Sénégal'
+      }
+    };
+
+    this.exportService.exportToExcel(exportOptions);
+    this.notificationService.success(`${this.filteredStocks.length} produit(s) exporté(s) avec succès en Excel`);
+    this.closeExportModal();
+  }
+
+  /**
+   * Export vers PDF
+   */
+  exportToPDF(): void {
+    // Vérifier qu'il y a des données à exporter
+    if (this.filteredStocks.length === 0) {
+      this.notificationService.error('Aucune donnée à exporter');
+      return;
+    }
+
+    const columns = [
+      { header: 'Produit', field: 'nomProduit' },
+      { header: 'Qté Achetée', field: 'quantiteAchetee' },
+      { header: 'Qté Vendue', field: 'quantiteVendue' },
+      { header: 'Stock Dispo.', field: 'stockDisponible' },
+      {
+        header: `Prix Moy. Achat (${this.defaultCurrency?.symbole || 'CFA'})`,
+        field: 'prixMoyenAchat',
+        format: (val: number) => val.toFixed(2)
+      },
+      {
+        header: `Prix Moy. Vente (${this.defaultCurrency?.symbole || 'CFA'})`,
+        field: 'prixMoyenVente',
+        format: (val: number) => val.toFixed(2)
+      },
+      {
+        header: `Valeur Stock (${this.defaultCurrency?.symbole || 'CFA'})`,
+        field: 'valeurStock',
+        format: (val: number) => val.toFixed(2)
+      },
+      {
+        header: `Marge Unit. (${this.defaultCurrency?.symbole || 'CFA'})`,
+        field: 'margeUnitaire',
+        format: (val: number) => val.toFixed(2)
+      },
+      { header: 'Statut', field: 'statut', format: (val: StatutStock) => this.getStatutLabel(val) }
+    ];
+
+    const exportOptions = {
+      filename: `stock_${new Date().toISOString().split('T')[0]}`,
+      title: 'État du Stock',
+      columns,
+      data: this.filteredStocks,
+      companyInfo: {
+        nom: 'Boutique Dija Saliou',
+        proprietaire: 'Saliou Dija',
+        telephone: '+221 XX XXX XX XX',
+        adresse: 'Dakar, Sénégal'
+      }
+    };
+
+    this.exportService.exportToPDF(exportOptions);
+    this.notificationService.success(`${this.filteredStocks.length} produit(s) exporté(s) avec succès en PDF`);
+    this.closeExportModal();
   }
 }
