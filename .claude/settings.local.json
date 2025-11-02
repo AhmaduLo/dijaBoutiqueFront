@@ -13,7 +13,8 @@
       "Bash(npm install:*)",
       "Bash(cmd /c \"taskkill /PID 41668 /F\")",
       "Bash(git rm:*)",
-      "Bash(npx ng build:*)"
+      "Bash(npx ng build:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

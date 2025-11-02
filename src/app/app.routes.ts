@@ -29,40 +29,42 @@ export const routes: Routes = [
     canActivate: [guestGuard]
   },
   // Routes protégées (nécessitent une authentification)
+  // Routes ADMIN uniquement (Tableau de bord, Achats, Dépenses, Rapports)
   {
     path: 'dashboard',
     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
-    canActivate: [authGuard]
+    canActivate: [adminGuard]
   },
   {
     path: 'achats',
     loadComponent: () => import('./features/achats/achats.component').then(m => m.AchatsComponent),
-    canActivate: [authGuard]
+    canActivate: [adminGuard]
   },
+  {
+    path: 'depenses',
+    loadComponent: () => import('./features/depenses/depenses.component').then(m => m.DepensesComponent),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'rapports',
+    loadComponent: () => import('./features/rapports/rapports.component').then(m => m.RapportsComponent),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'admin',
+    loadComponent: () => import('./features/admin/admin-dashboard.component').then(m => m.AdminDashboardComponent),
+    canActivate: [adminGuard]
+  },
+  // Routes accessibles par USER et ADMIN (Ventes, Stock)
   {
     path: 'ventes',
     loadComponent: () => import('./features/ventes/ventes.component').then(m => m.VentesComponent),
     canActivate: [authGuard]
   },
   {
-    path: 'depenses',
-    loadComponent: () => import('./features/depenses/depenses.component').then(m => m.DepensesComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'rapports',
-    loadComponent: () => import('./features/rapports/rapports.component').then(m => m.RapportsComponent),
-    canActivate: [authGuard]
-  },
-  {
     path: 'stock',
     loadComponent: () => import('./features/stock/stock-dashboard.component').then(m => m.StockDashboardComponent),
     canActivate: [authGuard]
-  },
-  {
-    path: 'admin',
-    loadComponent: () => import('./features/admin/admin-dashboard.component').then(m => m.AdminDashboardComponent),
-    canActivate: [adminGuard]
   },
   // Redirection par défaut
   {

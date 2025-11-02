@@ -93,7 +93,12 @@ export class LoginComponent {
     this.authService.login(credentials).subscribe({
       next: (response) => {
         this.notificationService.success(`Bienvenue ${response.user.prenom} !`);
-        this.router.navigate(['/dashboard']);
+        // Rediriger selon le rôle de l'utilisateur
+        if (response.user.role === 'ADMIN') {
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.router.navigate(['/ventes']);
+        }
         this.isSubmitting = false;
       },
       error: (error) => {

@@ -45,7 +45,7 @@ export const adminGuard = () => {
     return true;
   }
 
-  // Rediriger vers le dashboard si pas ADMIN
-  router.navigate(['/dashboard']);
+  // Rediriger vers ventes si pas ADMIN (les USER n'ont pas accès au dashboard)
+  router.navigate(['/ventes']);
   return false;
 };

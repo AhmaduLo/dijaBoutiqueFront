@@ -12,6 +12,7 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
 import { CurrencyService } from '../../core/services/currency.service';
 import { Currency } from '../../core/models/currency.model';
 import { ExportService } from '../../core/services/export.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-ventes',
@@ -22,7 +23,7 @@ import { ExportService } from '../../core/services/export.service';
       <div class="page-header">
         <h1>💰 Gestion des Ventes</h1>
         <div style="display: flex; gap: 1rem;">
-          <button class="btn btn-success" (click)="openExportModal()">
+          <button class="btn btn-success" (click)="openExportModal()" *ngIf="isAdmin()">
             📊 Exporter
           </button>
           <button class="btn btn-primary" (click)="openForm()">
@@ -163,7 +164,7 @@ import { ExportService } from '../../core/services/export.service';
               <th>Quantité</th>
               <th>Prix unitaire</th>
               <th>Prix total</th>
-              <th>Créé par</th>
+              <th *ngIf="isAdmin()">Créé par</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -181,7 +182,7 @@ import { ExportService } from '../../core/services/export.service';
                 {{ vente.prixTotal | number:'1.0-2':'fr-FR' }}
                 <span class="currency-badge">{{ vente.deviseSymbole || defaultCurrency?.symbole || 'CFA' }}</span>
               </td>
-              <td>{{ vente.utilisateur?.prenom || 'N/A' }}</td>
+              <td *ngIf="isAdmin()">{{ vente.utilisateur?.prenom || 'N/A' }}</td>
               <td>
                 <div class="actions">
                   <button class="btn-icon btn-edit" (click)="editVente(vente)" title="Modifier">✏️</button>
@@ -192,12 +193,12 @@ import { ExportService } from '../../core/services/export.service';
           </tbody>
           <tfoot>
             <tr class="total-row">
-              <td colspan="5" class="text-right"><strong>Total :</strong></td>
+              <td [attr.colspan]="isAdmin() ? 5 : 5" class="text-right"><strong>Total :</strong></td>
               <td class="bold">
                 {{ calculateTotal() | number:'1.0-2':'fr-FR' }}
                 <span class="currency-badge">{{ defaultCurrency?.symbole || 'CFA' }}</span>
               </td>
-              <td colspan="2"></td>
+              <td [attr.colspan]="isAdmin() ? 2 : 1"></td>
             </tr>
           </tfoot>
         </table>
@@ -244,7 +245,8 @@ export class VentesComponent implements OnInit {
     private notificationService: NotificationService,
     private currencyService: CurrencyService,
     private confirmService: ConfirmService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private authService: AuthService
   ) {
     this.venteForm = this.fb.group({
       nomProduit: ['', Validators.required],
@@ -319,7 +321,12 @@ export class VentesComponent implements OnInit {
 
   loadVentes(): void {
     this.isLoading = true;
-    this.venteService.getAll().subscribe({
+    // Si l'utilisateur est ADMIN, récupérer toutes les ventes, sinon seulement les siennes
+    const venteObservable = this.authService.isAdmin()
+      ? this.venteService.getAll()
+      : this.venteService.getByUtilisateur();
+
+    venteObservable.subscribe({
       next: (ventes) => {
         this.ventes = ventes.sort((a, b) =>
           new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime()
@@ -622,5 +629,12 @@ export class VentesComponent implements OnInit {
     this.exportService.exportToPDF(exportOptions);
     this.notificationService.success(`${dataToExport.length} vente(s) exportée(s) avec succès en PDF`);
     this.closeExportModal();
+  }
+
+  /**
+   * Vérifie si l'utilisateur connecté est un ADMIN
+   */
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
   }
 }

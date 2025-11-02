@@ -8,6 +8,7 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
 import { CurrencyService } from '../../core/services/currency.service';
 import { Currency } from '../../core/models/currency.model';
 import { ExportService } from '../../core/services/export.service';
+import { AuthService } from '../../core/services/auth.service';
 
 /**
  * Composant du dashboard de gestion de stock
@@ -21,7 +22,7 @@ import { ExportService } from '../../core/services/export.service';
       <div class="page-header">
         <h1>📦 Gestion du Stock</h1>
         <div style="display: flex; gap: 1rem;">
-          <button class="btn btn-success" (click)="openExportModal()">
+          <button class="btn btn-success" (click)="openExportModal()" *ngIf="isAdmin()">
             📊 Exporter
           </button>
           <button class="btn btn-primary" (click)="refreshData()">
@@ -256,7 +257,8 @@ export class StockDashboardComponent implements OnInit {
     private stockService: StockService,
     private notificationService: NotificationService,
     private currencyService: CurrencyService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private authService: AuthService
   ) { }
 
   ngOnInit(): void {
@@ -502,5 +504,12 @@ export class StockDashboardComponent implements OnInit {
     this.exportService.exportToPDF(exportOptions);
     this.notificationService.success(`${this.filteredStocks.length} produit(s) exporté(s) avec succès en PDF`);
     this.closeExportModal();
+  }
+
+  /**
+   * Vérifie si l'utilisateur connecté est un ADMIN
+   */
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
   }
 }
