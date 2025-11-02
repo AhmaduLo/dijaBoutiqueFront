@@ -257,7 +257,7 @@ export class AdminDashboardComponent implements OnInit {
 
     const confirmed = await this.confirmService.confirm({
       title: 'Supprimer l\'utilisateur',
-      message: `Êtes-vous sûr de vouloir supprimer ${user.prenom} ${user.nom} ?`,
+      message: `Êtes-vous sûr de vouloir supprimer ${user.prenom} ${user.nom} ?\n\nℹ️ Note: L'utilisateur ne pourra plus se connecter, mais toutes ses données (ventes, achats, dépenses) seront préservées dans le système pour l'historique et les rapports.`,
       confirmText: 'Supprimer',
       cancelText: 'Annuler',
       type: 'danger'
@@ -269,7 +269,7 @@ export class AdminDashboardComponent implements OnInit {
 
     this.adminService.deleteUtilisateur(user.id).subscribe({
       next: () => {
-        this.notificationService.success('Utilisateur supprimé avec succès');
+        this.notificationService.success('Utilisateur supprimé avec succès. Ses données ont été préservées.');
         this.loadData();
       },
       error: (error) => {

@@ -20,6 +20,15 @@ export interface Utilisateur {
   motDePasse?: string; // Seulement pour la création/modification
   dateCreation?: string;
   derniereConnexion?: string;
+  // Champs de suppression logique
+  deleted?: boolean;
+  dateSuppression?: string;
+  deletedBy?: {
+    id: number;
+    nom: string;
+    prenom: string;
+    email: string;
+  };
 }
 
 /**

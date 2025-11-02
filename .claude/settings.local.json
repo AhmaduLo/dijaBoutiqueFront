@@ -12,7 +12,8 @@
       "Bash(timeout:*)",
       "Bash(npm install:*)",
       "Bash(cmd /c \"taskkill /PID 41668 /F\")",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(npx ng build:*)"
     ],
     "deny": [],
     "ask": []
