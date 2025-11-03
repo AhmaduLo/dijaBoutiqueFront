@@ -45,7 +45,27 @@ export const adminGuard = () => {
     return true;
   }
 
-  // Rediriger vers ventes si pas ADMIN (les USER n'ont pas accès au dashboard)
+  // Rediriger vers dashboard si GERANT, ventes si USER
+  if (authService.isGerant()) {
+    router.navigate(['/dashboard']);
+  } else {
+    router.navigate(['/ventes']);
+  }
+  return false;
+};
+
+/**
+ * Guard pour protéger les routes accessibles aux ADMIN et GERANT
+ */
+export const adminOrGerantGuard = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.isAuthenticated() && authService.isAdminOrGerant()) {
+    return true;
+  }
+
+  // Rediriger vers ventes si pas ADMIN ou GERANT
   router.navigate(['/ventes']);
   return false;
 };

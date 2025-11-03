@@ -23,7 +23,7 @@ import { AuthService } from '../../core/services/auth.service';
       <div class="page-header">
         <h1>💰 Gestion des Ventes</h1>
         <div style="display: flex; gap: 1rem;">
-          <button class="btn btn-success" (click)="openExportModal()" *ngIf="isAdmin()">
+          <button class="btn btn-success" (click)="openExportModal()" *ngIf="isAdminOrGerant()">
             📊 Exporter
           </button>
           <button class="btn btn-primary" (click)="openForm()">
@@ -164,7 +164,7 @@ import { AuthService } from '../../core/services/auth.service';
               <th>Quantité</th>
               <th>Prix unitaire</th>
               <th>Prix total</th>
-              <th *ngIf="isAdmin()">Créé par</th>
+              <th *ngIf="isAdminOrGerant()">Créé par</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -182,7 +182,7 @@ import { AuthService } from '../../core/services/auth.service';
                 {{ vente.prixTotal | number:'1.0-2':'fr-FR' }}
                 <span class="currency-badge">{{ vente.deviseSymbole || defaultCurrency?.symbole || 'CFA' }}</span>
               </td>
-              <td *ngIf="isAdmin()">{{ vente.utilisateur?.prenom || 'N/A' }}</td>
+              <td *ngIf="isAdminOrGerant()">{{ vente.utilisateur?.prenom || 'N/A' }}</td>
               <td>
                 <div class="actions">
                   <button class="btn-icon btn-edit" (click)="editVente(vente)" title="Modifier">✏️</button>
@@ -193,12 +193,12 @@ import { AuthService } from '../../core/services/auth.service';
           </tbody>
           <tfoot>
             <tr class="total-row">
-              <td [attr.colspan]="isAdmin() ? 5 : 5" class="text-right"><strong>Total :</strong></td>
+              <td [attr.colspan]="isAdminOrGerant() ? 5 : 5" class="text-right"><strong>Total :</strong></td>
               <td class="bold">
                 {{ calculateTotal() | number:'1.0-2':'fr-FR' }}
                 <span class="currency-badge">{{ defaultCurrency?.symbole || 'CFA' }}</span>
               </td>
-              <td [attr.colspan]="isAdmin() ? 2 : 1"></td>
+              <td [attr.colspan]="isAdminOrGerant() ? 2 : 1"></td>
             </tr>
           </tfoot>
         </table>
@@ -321,8 +321,8 @@ export class VentesComponent implements OnInit {
 
   loadVentes(): void {
     this.isLoading = true;
-    // Si l'utilisateur est ADMIN, récupérer toutes les ventes, sinon seulement les siennes
-    const venteObservable = this.authService.isAdmin()
+    // Si l'utilisateur est ADMIN ou GERANT, récupérer toutes les ventes, sinon seulement les siennes
+    const venteObservable = this.authService.isAdminOrGerant()
       ? this.venteService.getAll()
       : this.venteService.getByUtilisateur();
 
@@ -636,5 +636,12 @@ export class VentesComponent implements OnInit {
    */
   isAdmin(): boolean {
     return this.authService.isAdmin();
+  }
+
+  /**
+   * Vérifie si l'utilisateur connecté est un ADMIN ou GERANT
+   */
+  isAdminOrGerant(): boolean {
+    return this.authService.isAdminOrGerant();
   }
 }

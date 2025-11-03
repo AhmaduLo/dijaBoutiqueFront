@@ -94,7 +94,7 @@ export class LoginComponent {
       next: (response) => {
         this.notificationService.success(`Bienvenue ${response.user.prenom} !`);
         // Rediriger selon le rôle de l'utilisateur
-        if (response.user.role === 'ADMIN') {
+        if (response.user.role === 'ADMIN' || response.user.role === 'GERANT') {
           this.router.navigate(['/dashboard']);
         } else {
           this.router.navigate(['/ventes']);

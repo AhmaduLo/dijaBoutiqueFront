@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard, adminGuard } from './core/guards/auth.guard';
+import { authGuard, guestGuard, adminGuard, adminOrGerantGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // Page d'accueil (Landing page)
@@ -29,33 +29,34 @@ export const routes: Routes = [
     canActivate: [guestGuard]
   },
   // Routes protégées (nécessitent une authentification)
-  // Routes ADMIN uniquement (Tableau de bord, Achats, Dépenses, Rapports)
-  {
-    path: 'dashboard',
-    loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
-    canActivate: [adminGuard]
-  },
-  {
-    path: 'achats',
-    loadComponent: () => import('./features/achats/achats.component').then(m => m.AchatsComponent),
-    canActivate: [adminGuard]
-  },
-  {
-    path: 'depenses',
-    loadComponent: () => import('./features/depenses/depenses.component').then(m => m.DepensesComponent),
-    canActivate: [adminGuard]
-  },
-  {
-    path: 'rapports',
-    loadComponent: () => import('./features/rapports/rapports.component').then(m => m.RapportsComponent),
-    canActivate: [adminGuard]
-  },
+  // Routes ADMIN uniquement (Administration)
   {
     path: 'admin',
     loadComponent: () => import('./features/admin/admin-dashboard.component').then(m => m.AdminDashboardComponent),
     canActivate: [adminGuard]
   },
-  // Routes accessibles par USER et ADMIN (Ventes, Stock)
+  // Routes ADMIN + GERANT (Dashboard, Achats, Dépenses, Rapports)
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
+    canActivate: [adminOrGerantGuard]
+  },
+  {
+    path: 'achats',
+    loadComponent: () => import('./features/achats/achats.component').then(m => m.AchatsComponent),
+    canActivate: [adminOrGerantGuard]
+  },
+  {
+    path: 'depenses',
+    loadComponent: () => import('./features/depenses/depenses.component').then(m => m.DepensesComponent),
+    canActivate: [adminOrGerantGuard]
+  },
+  {
+    path: 'rapports',
+    loadComponent: () => import('./features/rapports/rapports.component').then(m => m.RapportsComponent),
+    canActivate: [adminOrGerantGuard]
+  },
+  // Routes accessibles par USER + GERANT + ADMIN (Ventes, Stock)
   {
     path: 'ventes',
     loadComponent: () => import('./features/ventes/ventes.component').then(m => m.VentesComponent),

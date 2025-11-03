@@ -3,6 +3,7 @@
  */
 export enum UserRole {
   ADMIN = 'ADMIN',
+  GERANT = 'GERANT',
   USER = 'USER'
 }
 
@@ -67,6 +68,7 @@ export interface ChangeRoleDto {
 export interface StatistiquesAdmin {
   nombreTotal: number;
   nombreAdmins: number;
+  nombreGerants?: number;
   nombreUsers: number;
   nouveauxUtilisateurs7Jours: number;
   utilisateursActifs?: number;

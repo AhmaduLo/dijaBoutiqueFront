@@ -123,6 +123,7 @@
           <label>Rôle *</label>
           <select formControlName="role">
             <option [value]="userRoles.USER">👤 Employé</option>
+            <option [value]="userRoles.GERANT">👔 Gérant</option>
             <option [value]="userRoles.ADMIN">👑 Administrateur</option>
           </select>
         </div>
@@ -148,6 +149,7 @@
     <select [(ngModel)]="selectedRole" (change)="filterUtilisateurs()" [ngModelOptions]="{standalone: true}">
       <option value="">Tous les rôles</option>
       <option [value]="userRoles.ADMIN">👑 Administrateurs</option>
+      <option [value]="userRoles.GERANT">👔 Gérants</option>
       <option [value]="userRoles.USER">👤 Employés</option>
     </select>
   </div>

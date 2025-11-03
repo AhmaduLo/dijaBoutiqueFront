@@ -21,11 +21,11 @@ import { User } from '../../../core/models/auth.model';
           <p class="subtitle" *ngIf="!isAuthenticated">Gestion d'accessoires féminins</p>
         </div>
         <nav class="nav-menu" *ngIf="isAuthenticated">
-          <a routerLink="/dashboard" routerLinkActive="active" *ngIf="isAdmin()">
+          <a routerLink="/dashboard" routerLinkActive="active" *ngIf="isAdminOrGerant()">
             <span class="icon">📊</span>
             Tableau de bord
           </a>
-          <a routerLink="/achats" routerLinkActive="active" *ngIf="isAdmin()">
+          <a routerLink="/achats" routerLinkActive="active" *ngIf="isAdminOrGerant()">
             <span class="icon">🛒</span>
             Achats
           </a>
@@ -33,7 +33,7 @@ import { User } from '../../../core/models/auth.model';
             <span class="icon">💰</span>
             Ventes
           </a>
-          <a routerLink="/depenses" routerLinkActive="active" *ngIf="isAdmin()">
+          <a routerLink="/depenses" routerLinkActive="active" *ngIf="isAdminOrGerant()">
             <span class="icon">💳</span>
             Dépenses
           </a>
@@ -41,7 +41,7 @@ import { User } from '../../../core/models/auth.model';
             <span class="icon">📦</span>
             Stock
           </a>
-          <a routerLink="/rapports" routerLinkActive="active" *ngIf="isAdmin()">
+          <a routerLink="/rapports" routerLinkActive="active" *ngIf="isAdminOrGerant()">
             <span class="icon">📈</span>
             Rapports
           </a>
@@ -100,6 +100,10 @@ export class HeaderComponent implements OnInit {
 
   isAdmin(): boolean {
     return this.authService.isAdmin();
+  }
+
+  isAdminOrGerant(): boolean {
+    return this.authService.isAdminOrGerant();
   }
 
   getCompanyName(): string {

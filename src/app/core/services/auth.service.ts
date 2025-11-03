@@ -55,6 +55,22 @@ export class AuthService {
   }
 
   /**
+   * Vérifie si l'utilisateur courant est un GERANT
+   */
+  isGerant(): boolean {
+    const user = this.getCurrentUser();
+    return user?.role === 'GERANT';
+  }
+
+  /**
+   * Vérifie si l'utilisateur courant est un ADMIN ou un GERANT
+   */
+  isAdminOrGerant(): boolean {
+    const user = this.getCurrentUser();
+    return user?.role === 'ADMIN' || user?.role === 'GERANT';
+  }
+
+  /**
    * Inscription d'un nouvel utilisateur
    * Note: withCredentials est ajouté automatiquement par l'intercepteur
    */

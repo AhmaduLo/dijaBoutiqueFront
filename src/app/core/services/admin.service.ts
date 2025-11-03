@@ -78,6 +78,7 @@ export class AdminService {
   getRoleLabel(role: UserRole): string {
     const labels: { [key in UserRole]: string } = {
       ADMIN: 'Administrateur',
+      GERANT: 'Gérant',
       USER: 'Employé'
     };
     return labels[role];
@@ -89,6 +90,7 @@ export class AdminService {
   getRoleColor(role: UserRole): string {
     const colors: { [key in UserRole]: string } = {
       ADMIN: '#0891b2', // Teal
+      GERANT: '#8b5cf6', // Violet
       USER: '#3b82f6'  // Bleu
     };
     return colors[role];
@@ -100,6 +102,7 @@ export class AdminService {
   getRoleIcon(role: UserRole): string {
     const icons: { [key in UserRole]: string } = {
       ADMIN: '👑',
+      GERANT: '👔',
       USER: '👤'
     };
     return icons[role];

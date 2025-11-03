@@ -22,7 +22,7 @@ import { AuthService } from '../../core/services/auth.service';
       <div class="page-header">
         <h1>📦 Gestion du Stock</h1>
         <div style="display: flex; gap: 1rem;">
-          <button class="btn btn-success" (click)="openExportModal()" *ngIf="isAdmin()">
+          <button class="btn btn-success" (click)="openExportModal()" *ngIf="isAdminOrGerant()">
             📊 Exporter
           </button>
           <button class="btn btn-primary" (click)="refreshData()">
@@ -511,5 +511,12 @@ export class StockDashboardComponent implements OnInit {
    */
   isAdmin(): boolean {
     return this.authService.isAdmin();
+  }
+
+  /**
+   * Vérifie si l'utilisateur connecté est un ADMIN ou GERANT
+   */
+  isAdminOrGerant(): boolean {
+    return this.authService.isAdminOrGerant();
   }
 }
