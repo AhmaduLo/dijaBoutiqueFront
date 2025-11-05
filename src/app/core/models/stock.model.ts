@@ -18,6 +18,7 @@ export interface StockDto {
   stockDisponible: number;
   prixMoyenAchat: number;
   prixMoyenVente: number;
+  prixVenteSuggere?: number; // Prix de vente suggéré depuis le dernier achat
   valeurStock: number;
   margeUnitaire: number;
   statut: StatutStock;

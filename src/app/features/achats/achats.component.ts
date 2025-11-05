@@ -119,11 +119,11 @@ import { ExportService } from '../../core/services/export.service';
                 </div>
               </div>
               <div class="form-group">
-                <label>Fournisseur *</label>
-                <input type="text" formControlName="fournisseur" placeholder="Ex: Fournisseur Paris" />
-                <div class="error" *ngIf="achatForm.get('fournisseur')?.invalid && achatForm.get('fournisseur')?.touched">
-                  Le fournisseur est requis
-                </div>
+                <label>Fournisseur</label>
+                <input type="text" formControlName="fournisseur" placeholder="Ex: Fournisseur Paris (optionnel)" />
+                <small style="color: #666; display: block; margin-top: 0.25rem;">
+                  Si vide, "Fournisseur" sera utilisé
+                </small>
               </div>
             </div>
 
@@ -136,11 +136,23 @@ import { ExportService } from '../../core/services/export.service';
                 </div>
               </div>
               <div class="form-group">
-                <label>Prix unitaire ({{ selectedCurrency?.symbole || 'CFA' }}) *</label>
+                <label>Prix d'achat unitaire ({{ selectedCurrency?.symbole || 'CFA' }}) *</label>
                 <input type="number" formControlName="prixUnitaire" min="0" step="0.01" (input)="calculerTotal()" />
                 <div class="error" *ngIf="achatForm.get('prixUnitaire')?.invalid && achatForm.get('prixUnitaire')?.touched">
-                  Le prix unitaire doit être positif
+                  Le prix d'achat unitaire doit être positif
                 </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Prix de vente unitaire ({{ selectedCurrency?.symbole || 'CFA' }})</label>
+                <input type="number" formControlName="prixVenteSuggere" min="0" step="0.01" placeholder="Optionnel" />
+                <small style="color: #666; display: block; margin-top: 0.25rem;">
+                  💡 Ce prix sera suggéré lors des ventes
+                </small>
+              </div>
+              <div class="form-group">
               </div>
             </div>
 
@@ -290,9 +302,10 @@ export class AchatsComponent implements OnInit {
     this.achatForm = this.fb.group({
       nomProduit: ['', Validators.required],
       nouveauProduit: [''],
-      fournisseur: ['', Validators.required],
+      fournisseur: [''],
       quantite: [1, [Validators.required, Validators.min(1)]],
       prixUnitaire: [0, [Validators.required, Validators.min(0)]],
+      prixVenteSuggere: [0],
       dateAchat: [new Date().toISOString().split('T')[0], Validators.required],
       prixTotal: [{ value: 0, disabled: true }]
     });
@@ -414,8 +427,10 @@ export class AchatsComponent implements OnInit {
     this.achatForm.reset({
       nomProduit: '',
       nouveauProduit: '',
+      fournisseur: '',
       quantite: 1,
       prixUnitaire: 0,
+      prixVenteSuggere: 0,
       dateAchat: new Date().toISOString().split('T')[0],
       prixTotal: 0
     });
@@ -462,9 +477,10 @@ export class AchatsComponent implements OnInit {
 
     const achat: Achat = {
       nomProduit: nomProduitFinal,
-      fournisseur: formValue.fournisseur,
+      fournisseur: formValue.fournisseur?.trim() || 'Fournisseur',
       quantite: formValue.quantite,
       prixUnitaire: formValue.prixUnitaire,
+      prixVenteSuggere: formValue.prixVenteSuggere || undefined,
       dateAchat: formValue.dateAchat,
       prixTotal: this.achatService.calculerPrixTotal(formValue.quantite, formValue.prixUnitaire),
       deviseId: this.selectedCurrency?.id,

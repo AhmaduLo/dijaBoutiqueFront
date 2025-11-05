@@ -7,6 +7,7 @@ export interface Achat {
   nomProduit: string;
   prixUnitaire: number;
   prixTotal: number;
+  prixVenteSuggere?: number; // Prix de vente suggéré pour pré-remplir les ventes
   dateAchat: string; // Format: YYYY-MM-DD
   fournisseur: string;
   deviseId?: number; // ID de la devise utilisée

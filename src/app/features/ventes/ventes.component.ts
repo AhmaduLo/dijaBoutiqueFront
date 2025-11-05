@@ -13,6 +13,7 @@ import { CurrencyService } from '../../core/services/currency.service';
 import { Currency } from '../../core/models/currency.model';
 import { ExportService } from '../../core/services/export.service';
 import { AuthService } from '../../core/services/auth.service';
+import { AchatService } from '../../core/services/achat.service';
 
 @Component({
   selector: 'app-ventes',
@@ -101,17 +102,22 @@ import { AuthService } from '../../core/services/auth.service';
                 </div>
                 <div class="info-stock" *ngIf="selectedProduct">
                   <small>
-                    📦 Stock disponible: {{ selectedProduct.stockDisponible }} unités |
-                    💰 Prix de vente suggéré: {{ selectedProduct.prixMoyenVente | currencyEur }}
+                    📦 Stock disponible: {{ selectedProduct.stockDisponible }} unités
+                    <span *ngIf="selectedProduct.prixVenteSuggere && selectedProduct.prixVenteSuggere > 0">
+                      | 💰 Prix suggéré: {{ selectedProduct.prixVenteSuggere | currencyEur }} (depuis achat)
+                    </span>
+                    <span *ngIf="(!selectedProduct.prixVenteSuggere || selectedProduct.prixVenteSuggere <= 0) && selectedProduct.prixMoyenVente > 0">
+                      | 💰 Prix moyen: {{ selectedProduct.prixMoyenVente | currencyEur }}
+                    </span>
                   </small>
                 </div>
               </div>
               <div class="form-group">
-                <label>Client *</label>
-                <input type="text" formControlName="client" placeholder="Ex: Marie Martin" />
-                <div class="error" *ngIf="venteForm.get('client')?.invalid && venteForm.get('client')?.touched">
-                  Le nom du client est requis
-                </div>
+                <label>Client</label>
+                <input type="text" formControlName="client" placeholder="Ex: Marie Martin (optionnel)" />
+                <small style="color: #666; display: block; margin-top: 0.25rem;">
+                  Si vide, "Client" sera utilisé
+                </small>
               </div>
             </div>
             <div class="form-row">
@@ -238,10 +244,14 @@ export class VentesComponent implements OnInit {
   selectedCurrency?: Currency;
   defaultCurrency?: Currency;
 
+  // Cache des prix de vente suggérés par produit
+  private prixVenteSuggereCache: Map<string, number> = new Map();
+
   constructor(
     private fb: FormBuilder,
     private venteService: VenteService,
     private stockService: StockService,
+    private achatService: AchatService,
     private notificationService: NotificationService,
     private currencyService: CurrencyService,
     private confirmService: ConfirmService,
@@ -250,7 +260,7 @@ export class VentesComponent implements OnInit {
   ) {
     this.venteForm = this.fb.group({
       nomProduit: ['', Validators.required],
-      client: ['', Validators.required],
+      client: [''],
       quantite: [1, [Validators.required, Validators.min(1)]],
       prixUnitaire: [0, [Validators.required, Validators.min(0)]],
       dateVente: [new Date().toISOString().split('T')[0], Validators.required],
@@ -262,6 +272,36 @@ export class VentesComponent implements OnInit {
     this.loadCurrencies();
     this.loadVentes();
     this.loadProduitsDisponibles();
+    this.chargerPrixVenteSuggeres();
+  }
+
+  /**
+   * Charge les prix de vente suggérés depuis les achats
+   */
+  chargerPrixVenteSuggeres(): void {
+    this.achatService.getAll().subscribe({
+      next: (achats) => {
+        // Trier les achats par date décroissante pour obtenir les plus récents en premier
+        const achatsTries = achats
+          .filter(achat => achat.prixVenteSuggere && achat.prixVenteSuggere > 0)
+          .sort((a, b) => new Date(b.dateAchat).getTime() - new Date(a.dateAchat).getTime());
+
+        // Garder le prix de vente du dernier achat pour chaque produit
+        for (const achat of achatsTries) {
+          if (achat.prixVenteSuggere && achat.prixVenteSuggere > 0) {
+            const prixExistant = this.prixVenteSuggereCache.get(achat.nomProduit);
+            if (prixExistant) {
+              // Le produit existe déjà, on garde celui qui existe car il est déjà le plus récent
+              continue;
+            }
+            this.prixVenteSuggereCache.set(achat.nomProduit, achat.prixVenteSuggere);
+          }
+        }
+      },
+      error: (error) => {
+        console.warn('Erreur lors du chargement des prix de vente suggérés:', error);
+      }
+    });
   }
 
   /**
@@ -307,10 +347,29 @@ export class VentesComponent implements OnInit {
     if (nomProduit) {
       this.selectedProduct = this.produitsDisponibles.find(p => p.nomProduit === nomProduit);
 
-      // Auto-remplir le prix de vente avec le prix moyen de vente du stock
-      if (this.selectedProduct && this.selectedProduct.prixMoyenVente > 0) {
+      let prixSuggere = 0;
+
+      // Priorité 1: Prix de vente suggéré depuis le cache des achats
+      const prixCache = this.prixVenteSuggereCache.get(nomProduit);
+      if (prixCache && prixCache > 0) {
+        prixSuggere = prixCache;
+        // Mettre à jour le produit sélectionné pour l'affichage
+        if (this.selectedProduct) {
+          this.selectedProduct.prixVenteSuggere = prixCache;
+        }
+      }
+      // Priorité 2: Prix de vente suggéré depuis le stock
+      else if (this.selectedProduct?.prixVenteSuggere && this.selectedProduct.prixVenteSuggere > 0) {
+        prixSuggere = this.selectedProduct.prixVenteSuggere;
+      }
+      // Priorité 3: Prix moyen de vente
+      else if (this.selectedProduct?.prixMoyenVente && this.selectedProduct.prixMoyenVente > 0) {
+        prixSuggere = this.selectedProduct.prixMoyenVente;
+      }
+
+      if (prixSuggere > 0) {
         this.venteForm.patchValue({
-          prixUnitaire: this.selectedProduct.prixMoyenVente
+          prixUnitaire: prixSuggere
         });
         this.calculerTotal();
       }
@@ -358,6 +417,7 @@ export class VentesComponent implements OnInit {
     this.selectedProduct = undefined;
     this.venteForm.reset({
       nomProduit: '',
+      client: '',
       quantite: 1,
       prixUnitaire: 0,
       dateVente: new Date().toISOString().split('T')[0],
@@ -397,6 +457,7 @@ export class VentesComponent implements OnInit {
     const formValue = this.venteForm.getRawValue();
     const vente: Vente = {
       ...formValue,
+      client: formValue.client?.trim() || 'Client',
       prixTotal: this.venteService.calculerPrixTotal(formValue.quantite, formValue.prixUnitaire),
       deviseId: this.selectedCurrency?.id,
       deviseCode: this.selectedCurrency?.code,
