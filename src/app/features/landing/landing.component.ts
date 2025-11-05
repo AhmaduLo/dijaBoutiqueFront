@@ -12,19 +12,6 @@ import { Router } from '@angular/router';
   imports: [CommonModule],
   template: `
     <div class="landing-page">
-      <!-- Header -->
-      <header class="landing-header">
-        <div class="container">
-          <div class="logo">
-            <h1>Boutique Dija Saliou</h1>
-          </div>
-          <nav class="nav-buttons">
-            <button class="btn btn-outline" (click)="goToLogin()">Connexion</button>
-            <button class="btn btn-primary" (click)="goToRegister()">S'inscrire</button>
-          </nav>
-        </div>
-      </header>
-
       <!-- Hero Section -->
       <section class="hero-section">
         <div class="container">
@@ -170,7 +157,7 @@ import { Router } from '@angular/router';
   styleUrls: ['./landing.component.scss']
 })
 export class LandingComponent {
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
   goToLogin(): void {
     this.router.navigate(['/login']);
