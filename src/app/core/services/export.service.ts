@@ -161,18 +161,18 @@ export class ExportService {
 
       let contactYPos = 18;
 
-      // Symbole et téléphone avec encodage Unicode
-      doc.text(`\u260E ${companyInfo.telephone}`, pageWidth - 14, contactYPos, { align: 'right' });
-      contactYPos += 5;
-
-      // Symbole et propriétaire
-      doc.text(`\u0055\u0064 ${companyInfo.proprietaire}`, pageWidth - 14, contactYPos, { align: 'right' });
+      // Numéro de téléphone
+      doc.text(`Numéro : ${companyInfo.telephone}`, pageWidth - 14, contactYPos, { align: 'right' });
       contactYPos += 5;
 
       // Adresse si disponible
       if (companyInfo.adresse) {
-        doc.text(`\u0055\u006C ${companyInfo.adresse}`, pageWidth - 14, contactYPos, { align: 'right' });
+        doc.text(`Adresse : ${companyInfo.adresse}`, pageWidth - 14, contactYPos, { align: 'right' });
+        contactYPos += 5;
       }
+
+      // Propriétaire
+      doc.text(`Propriétaire : ${companyInfo.proprietaire}`, pageWidth - 14, contactYPos, { align: 'right' });
 
       // Réinitialiser la couleur du texte pour le reste du document
       doc.setTextColor(0, 0, 0);

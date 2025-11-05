@@ -8,6 +8,10 @@ import { MetricCardComponent } from '../../shared/components/metric-card/metric-
 import { CurrencyService } from '../../core/services/currency.service';
 import { Currency } from '../../core/models/currency.model';
 import { ExportService } from '../../core/services/export.service';
+import { AuthService } from '../../core/services/auth.service';
+import { TenantService } from '../../core/services/tenant.service';
+import { User } from '../../core/models/auth.model';
+import { Tenant } from '../../core/models/tenant.model';
 
 /**
  * Composant de génération et visualisation de rapports
@@ -316,20 +320,42 @@ export class RapportsComponent implements OnInit {
   // Devise
   defaultCurrency?: Currency;
 
+  // Informations de l'entreprise et de l'utilisateur
+  currentUser?: User;
+  tenant?: Tenant;
+
   constructor(
     private rapportService: RapportService,
     private notificationService: NotificationService,
     private currencyService: CurrencyService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private authService: AuthService,
+    private tenantService: TenantService
   ) {}
 
   ngOnInit(): void {
     this.loadCurrency();
+    this.loadUserAndTenant();
     // Génère les 5 dernières années
     const anneeActuelle = new Date().getFullYear();
     for (let i = 0; i < 5; i++) {
       this.anneesDisponibles.push(anneeActuelle - i);
     }
+  }
+
+  /**
+   * Charge les informations de l'utilisateur et de l'entreprise
+   */
+  loadUserAndTenant(): void {
+    this.currentUser = this.authService.getCurrentUser() || undefined;
+    this.tenantService.getCurrentTenant().subscribe({
+      next: (tenant) => {
+        this.tenant = tenant;
+      },
+      error: (error) => {
+        console.warn('Impossible de charger les informations de l\'entreprise', error);
+      }
+    });
   }
 
   /**
@@ -436,10 +462,10 @@ export class RapportsComponent implements OnInit {
         dateFin: this.rapport.periode.dateFin
       },
       companyInfo: {
-        nom: 'Boutique Dija Saliou',
-        proprietaire: 'Saliou Dija',
-        telephone: '+221 XX XXX XX XX',
-        adresse: 'Dakar, Sénégal'
+        nom: this.tenant?.nomEntreprise || 'Mon Entreprise',
+        proprietaire: this.currentUser ? `${this.currentUser.prenom} ${this.currentUser.nom}` : 'Propriétaire',
+        telephone: this.tenant?.numeroTelephone || '',
+        adresse: this.tenant?.adresse || ''
       }
     };
 
@@ -492,10 +518,10 @@ export class RapportsComponent implements OnInit {
         dateFin: this.rapport.periode.dateFin
       },
       companyInfo: {
-        nom: 'Boutique Dija Saliou',
-        proprietaire: 'Saliou Dija',
-        telephone: '+221 XX XXX XX XX',
-        adresse: 'Dakar, Sénégal'
+        nom: this.tenant?.nomEntreprise || 'Mon Entreprise',
+        proprietaire: this.currentUser ? `${this.currentUser.prenom} ${this.currentUser.nom}` : 'Propriétaire',
+        telephone: this.tenant?.numeroTelephone || '',
+        adresse: this.tenant?.adresse || ''
       }
     };
 
