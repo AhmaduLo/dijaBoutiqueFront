@@ -412,6 +412,14 @@
             <label style="font-weight: 600; color: #6b7280; margin-bottom: 0.75rem; font-size: 0.875rem; text-transform: uppercase;">Nom de l'entreprise :</label>
             <p style="margin: 0; font-size: 1.25rem; color: #1f2937; padding: 1rem 1.25rem; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 10px; border-left: 4px solid #1e40af; font-weight: 500;">{{ tenant.nomEntreprise }}</p>
           </div>
+          <div class="info-row" style="display: flex; flex-direction: column;">
+            <label style="font-weight: 600; color: #6b7280; margin-bottom: 0.75rem; font-size: 0.875rem; text-transform: uppercase;">Adresse :</label>
+            <p style="margin: 0; font-size: 1.25rem; color: #1f2937; padding: 1rem 1.25rem; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 10px; border-left: 4px solid #3b82f6; font-weight: 500;">{{ tenant.adresse || 'Non renseignée' }}</p>
+          </div>
+          <div class="info-row" style="display: flex; flex-direction: column;">
+            <label style="font-weight: 600; color: #6b7280; margin-bottom: 0.75rem; font-size: 0.875rem; text-transform: uppercase;">Numéro de téléphone :</label>
+            <p style="margin: 0; font-size: 1.25rem; color: #1f2937; padding: 1rem 1.25rem; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 10px; border-left: 4px solid #10b981; font-weight: 500;">{{ tenant.numeroTelephone }}</p>
+          </div>
         </div>
 
         <!-- Mode édition -->
@@ -421,6 +429,22 @@
             <input type="text" formControlName="nomEntreprise" placeholder="Ex: Boutique Dija" style="width: 100%; padding: 0.875rem 1rem; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 1rem; font-family: inherit;" />
             <div class="error" *ngIf="tenantForm.get('nomEntreprise')?.invalid && tenantForm.get('nomEntreprise')?.touched" style="color: #dc2626; font-size: 0.875rem; margin-top: 0.5rem;">
               Le nom de l'entreprise est requis
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; font-size: 0.95rem;">Adresse *</label>
+            <input type="text" formControlName="adresse" placeholder="Ex: Dakar, Sénégal" style="width: 100%; padding: 0.875rem 1rem; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 1rem; font-family: inherit;" />
+            <div class="error" *ngIf="tenantForm.get('adresse')?.invalid && tenantForm.get('adresse')?.touched" style="color: #dc2626; font-size: 0.875rem; margin-top: 0.5rem;">
+              L'adresse est requise
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; font-size: 0.95rem;">Numéro de téléphone *</label>
+            <input type="tel" formControlName="numeroTelephone" placeholder="Ex: +221 77 123 45 67" style="width: 100%; padding: 0.875rem 1rem; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 1rem; font-family: inherit;" />
+            <div class="error" *ngIf="tenantForm.get('numeroTelephone')?.invalid && tenantForm.get('numeroTelephone')?.touched" style="color: #dc2626; font-size: 0.875rem; margin-top: 0.5rem;">
+              Le numéro de téléphone est requis
             </div>
           </div>
 

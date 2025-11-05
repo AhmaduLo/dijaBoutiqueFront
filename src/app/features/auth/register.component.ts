@@ -59,6 +59,14 @@ import { RegisterRequest } from '../../core/models/auth.model';
           </div>
 
           <div class="form-group">
+            <label>Adresse de l'entreprise *</label>
+            <input type="text" formControlName="adresseEntreprise" placeholder="Ex: Dakar, Sénégal" />
+            <div class="error" *ngIf="registerForm.get('adresseEntreprise')?.invalid && registerForm.get('adresseEntreprise')?.touched">
+              L'adresse de l'entreprise est requise
+            </div>
+          </div>
+
+          <div class="form-group">
             <label>Numéro de téléphone *</label>
             <div class="phone-input-group">
               <select formControlName="indicatifPays" class="country-code-select">
@@ -155,6 +163,7 @@ export class RegisterComponent {
       nom: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       nomEntreprise: ['', Validators.required],
+      adresseEntreprise: ['', Validators.required],
       indicatifPays: ['SN', Validators.required],
       numeroTelephone: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(6)]],

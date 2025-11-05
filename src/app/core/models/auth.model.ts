@@ -21,6 +21,7 @@ export interface RegisterRequest {
   email: string;
   motDePasse: string;
   nomEntreprise: string;
+  adresseEntreprise: string;
   numeroTelephone: string;
   role?: 'USER' | 'ADMIN' | 'GERANT'; // Optionnel, par défaut USER
 }

@@ -244,3 +244,77 @@ $info: #1976d2;
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+// ============================================
+// RESPONSIVE - Media Queries Globaux
+// ============================================
+
+// Tablettes et écrans moyens (1200px - 769px)
+@media (max-width: 1200px) {
+  .page-header {
+    padding: 1.5rem;
+
+    h1 {
+      font-size: 1.75rem;
+    }
+
+    button, .btn {
+      padding: 0.6rem 1.2rem;
+      font-size: 0.9rem;
+    }
+  }
+
+  .modal-content {
+    max-width: 90%;
+    padding: 1.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.2rem;
+
+    input, select, textarea {
+      padding: 0.65rem 0.9rem;
+      font-size: 0.9rem;
+    }
+  }
+
+  .form-row {
+    gap: 1rem;
+  }
+}
+
+// Petits écrans et mobiles (< 769px)
+@media (max-width: 768px) {
+  .page-header {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+
+    h1 {
+      font-size: 1.5rem;
+    }
+
+    div {
+      width: 100%;
+      flex-direction: column;
+    }
+  }
+
+  .modal {
+    padding: 0.5rem;
+  }
+
+  .modal-content {
+    max-width: 95%;
+    padding: 1rem;
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

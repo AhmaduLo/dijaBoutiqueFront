@@ -130,32 +130,53 @@ export class ExportService {
 
     let yPosition = 15;
 
-    // En-tête avec informations de l'entreprise
+    // En-tête avec informations de l'entreprise (style moderne avec fond bleu)
     if (companyInfo) {
-      // Nom de l'entreprise (grande et en gras)
-      doc.setFontSize(16);
+      // Fond bleu-gris foncé pour l'en-tête (couleur similaire à l'image: #4a5f6d)
+      doc.setFillColor(74, 95, 109);
+      doc.rect(0, 0, 210, 45, 'F');
+
+      // Forme diagonale blanche en bas à droite (effet moderne)
+      doc.setFillColor(255, 255, 255);
+      // Points du triangle: (x1,y1), (x2,y2), (x3,y3)
+      const trianglePoints = [
+        { x: 160, y: 45 },  // Point bas gauche
+        { x: 210, y: 25 },  // Point haut droit
+        { x: 210, y: 45 }   // Point bas droit
+      ];
+      doc.triangle(trianglePoints[0].x, trianglePoints[0].y,
+                   trianglePoints[1].x, trianglePoints[1].y,
+                   trianglePoints[2].x, trianglePoints[2].y, 'F');
+
+      // Nom de l'entreprise (blanc, grand et gras) - Gauche
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
       doc.setFont('helvetica', 'bold');
-      doc.text(companyInfo.nom, 14, yPosition);
-      yPosition += 7;
+      doc.text(companyInfo.nom, 14, 20);
 
-      // Informations de contact (plus petit)
-      doc.setFontSize(10);
+      // Informations de contact (blanc, plus petites, alignées à droite)
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Propriétaire: ${companyInfo.proprietaire}`, 14, yPosition);
-      yPosition += 5;
-      doc.text(`Tél: ${companyInfo.telephone}`, 14, yPosition);
-      yPosition += 5;
+      const pageWidth = doc.internal.pageSize.getWidth();
 
+      let contactYPos = 18;
+
+      // Symbole et téléphone avec encodage Unicode
+      doc.text(`\u260E ${companyInfo.telephone}`, pageWidth - 14, contactYPos, { align: 'right' });
+      contactYPos += 5;
+
+      // Symbole et propriétaire
+      doc.text(`\u0055\u0064 ${companyInfo.proprietaire}`, pageWidth - 14, contactYPos, { align: 'right' });
+      contactYPos += 5;
+
+      // Adresse si disponible
       if (companyInfo.adresse) {
-        doc.text(`Adresse: ${companyInfo.adresse}`, 14, yPosition);
-        yPosition += 5;
+        doc.text(`\u0055\u006C ${companyInfo.adresse}`, pageWidth - 14, contactYPos, { align: 'right' });
       }
 
-      // Ligne de séparation
-      yPosition += 2;
-      doc.setLineWidth(0.5);
-      doc.line(14, yPosition, 196, yPosition);
-      yPosition += 8;
+      // Réinitialiser la couleur du texte pour le reste du document
+      doc.setTextColor(0, 0, 0);
+      yPosition = 55;
     }
 
     // Titre du document

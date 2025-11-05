@@ -94,6 +94,7 @@ export class AdminDashboardComponent implements OnInit {
 
     this.tenantForm = this.fb.group({
       nomEntreprise: ['', Validators.required],
+      adresse: ['', Validators.required],
       numeroTelephone: ['', Validators.required]
     });
   }
@@ -509,6 +510,7 @@ export class AdminDashboardComponent implements OnInit {
         this.tenant = tenant;
         this.tenantForm.patchValue({
           nomEntreprise: tenant.nomEntreprise,
+          adresse: tenant.adresse || '',
           numeroTelephone: tenant.numeroTelephone
         });
         this.isLoadingTenant = false;
@@ -530,6 +532,7 @@ export class AdminDashboardComponent implements OnInit {
     if (this.tenant) {
       this.tenantForm.patchValue({
         nomEntreprise: this.tenant.nomEntreprise,
+        adresse: this.tenant.adresse || '',
         numeroTelephone: this.tenant.numeroTelephone
       });
     }
@@ -547,6 +550,7 @@ export class AdminDashboardComponent implements OnInit {
     const formValue = this.tenantForm.getRawValue();
     const updateData: UpdateTenantDto = {
       nomEntreprise: formValue.nomEntreprise,
+      adresse: formValue.adresse,
       numeroTelephone: formValue.numeroTelephone
     };
 

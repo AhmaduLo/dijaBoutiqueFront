@@ -197,6 +197,41 @@
   }
 }
 
+// Tablette et écrans moyens (1200px - 969px)
+@media (max-width: 1200px) {
+  .header-content {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .nav-menu {
+    gap: 0.25rem;
+
+    a {
+      padding: 0.6rem 0.9rem;
+      font-size: 0.85rem;
+
+      .icon {
+        font-size: 1.1rem;
+      }
+    }
+  }
+
+  .user-info .user-menu {
+    padding: 0.6rem 0.9rem;
+
+    .user-name {
+      font-size: 0.85rem;
+    }
+  }
+
+  .auth-links .btn-link {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.85rem;
+  }
+}
+
+// Petits écrans et mobiles (< 969px)
 @media (max-width: 968px) {
   .header-content {
     flex-direction: column;

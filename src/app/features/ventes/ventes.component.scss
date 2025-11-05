@@ -96,6 +96,45 @@
   }
 }
 
+// Tablettes et écrans moyens
+@media (max-width: 1200px) {
+  .ventes {
+    padding: 1.5rem;
+  }
+
+  .ventes-table {
+    overflow-x: auto;
+
+    table {
+      font-size: 0.85rem;
+
+      th, td {
+        padding: 0.65rem;
+      }
+
+      .actions {
+        gap: 0.4rem;
+
+        button {
+          padding: 0.4rem 0.7rem;
+          font-size: 0.8rem;
+        }
+      }
+    }
+  }
+
+  .currency-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .currency-badge-small {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.4rem;
+  }
+}
+
+// Mobiles
 @media (max-width: 768px) {
   .ventes {
     padding: 1rem;

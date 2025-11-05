@@ -4,6 +4,7 @@
 export interface Tenant {
   tenantUuid: string;
   nomEntreprise: string;
+  adresse?: string;
   numeroTelephone: string;
 }
 
@@ -12,5 +13,6 @@ export interface Tenant {
  */
 export interface UpdateTenantDto {
   nomEntreprise: string;
+  adresse?: string;
   numeroTelephone: string;
 }
