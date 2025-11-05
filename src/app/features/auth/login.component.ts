@@ -17,7 +17,7 @@ import { LoginRequest } from '../../core/models/auth.model';
     <div class="auth-container">
       <div class="auth-card">
         <div class="auth-header">
-          <h1>✨ Dija Boutique</h1>
+          <h1>✨ HeasyStock</h1>
           <h2>Connexion</h2>
           <p>Connectez-vous à votre compte</p>
         </div>

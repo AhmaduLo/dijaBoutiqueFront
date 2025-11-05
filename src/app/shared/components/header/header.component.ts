@@ -18,7 +18,7 @@ import { User } from '../../../core/models/auth.model';
         <div class="logo">
           <h1>✨ {{ getCompanyName() }}</h1>
           <p class="subtitle" *ngIf="isAuthenticated">Gestion commerciale</p>
-          <p class="subtitle" *ngIf="!isAuthenticated">Gestion d'accessoires féminins</p>
+          <p class="subtitle" *ngIf="!isAuthenticated">HeasyStock - Gestion simplifiée</p>
         </div>
         <nav class="nav-menu" *ngIf="isAuthenticated">
           <a routerLink="/dashboard" routerLinkActive="active" *ngIf="isAdminOrGerant()">
@@ -110,7 +110,7 @@ export class HeaderComponent implements OnInit {
     if (this.isAuthenticated && this.currentUser?.nomEntreprise) {
       return this.currentUser.nomEntreprise;
     }
-    return 'Dija Boutique';
+    return 'HeasyStock';
   }
 
   async logout(): Promise<void> {

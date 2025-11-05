@@ -17,7 +17,7 @@ import { RegisterRequest } from '../../core/models/auth.model';
     <div class="auth-container">
       <div class="auth-card">
         <div class="auth-header">
-          <h1>✨ Dija Boutique</h1>
+          <h1>✨ HeasyStock</h1>
           <h2>Créer un compte</h2>
           <p>Inscrivez-vous pour gérer votre activité</p>
         </div>
