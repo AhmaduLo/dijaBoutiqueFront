@@ -14,6 +14,7 @@ import { Currency } from '../../core/models/currency.model';
 import { ExportService } from '../../core/services/export.service';
 import { AuthService } from '../../core/services/auth.service';
 import { AchatService } from '../../core/services/achat.service';
+import { ProduitPourVente } from '../../core/models/produit-pour-vente.model';
 
 @Component({
   selector: 'app-ventes',
@@ -276,25 +277,16 @@ export class VentesComponent implements OnInit {
   }
 
   /**
-   * Charge les prix de vente suggérés depuis les achats
+   * Charge les prix de vente suggérés depuis le nouvel endpoint
+   * Accessible à TOUS les rôles (USER, GERANT, ADMIN)
    */
   chargerPrixVenteSuggeres(): void {
-    this.achatService.getAll().subscribe({
-      next: (achats) => {
-        // Trier les achats par date décroissante pour obtenir les plus récents en premier
-        const achatsTries = achats
-          .filter(achat => achat.prixVenteSuggere && achat.prixVenteSuggere > 0)
-          .sort((a, b) => new Date(b.dateAchat).getTime() - new Date(a.dateAchat).getTime());
-
-        // Garder le prix de vente du dernier achat pour chaque produit
-        for (const achat of achatsTries) {
-          if (achat.prixVenteSuggere && achat.prixVenteSuggere > 0) {
-            const prixExistant = this.prixVenteSuggereCache.get(achat.nomProduit);
-            if (prixExistant) {
-              // Le produit existe déjà, on garde celui qui existe car il est déjà le plus récent
-              continue;
-            }
-            this.prixVenteSuggereCache.set(achat.nomProduit, achat.prixVenteSuggere);
+    this.achatService.getProduitsAvecPrixVente().subscribe({
+      next: (produits: ProduitPourVente[]) => {
+        // Mettre en cache les prix de vente suggérés
+        for (const produit of produits) {
+          if (produit.prixVenteSuggere && produit.prixVenteSuggere > 0) {
+            this.prixVenteSuggereCache.set(produit.nomProduit, produit.prixVenteSuggere);
           }
         }
       },
@@ -349,7 +341,7 @@ export class VentesComponent implements OnInit {
 
       let prixSuggere = 0;
 
-      // Priorité 1: Prix de vente suggéré depuis le cache des achats
+      // Priorité 1: Prix de vente suggéré depuis le cache des achats (accessible à tous)
       const prixCache = this.prixVenteSuggereCache.get(nomProduit);
       if (prixCache && prixCache > 0) {
         prixSuggere = prixCache;

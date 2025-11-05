@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Achat, StatistiquesAchats } from '../models/achat.model';
+import { ProduitPourVente } from '../models/produit-pour-vente.model';
 import { AuthService } from './auth.service';
 
 /**
@@ -37,7 +38,15 @@ export class AchatService {
     const userId = this.authService.getCurrentUserId();
     return this.http.get<Achat[]>(`${this.API_URL}/utilisateur/${userId}`);
   }
-  
+
+  /**
+   * Récupère la liste des produits avec leurs prix de vente suggérés
+   * Accessible à TOUS les rôles (USER, GERANT, ADMIN)
+   * Ne contient pas d'informations sensibles (prix d'achat, fournisseur, etc.)
+   */
+  getProduitsAvecPrixVente(): Observable<ProduitPourVente[]> {
+    return this.http.get<ProduitPourVente[]>(`${this.API_URL}/produits-pour-vente`);
+  }
 
   /**
    * Récupère les statistiques sur une période pour l'utilisateur connecté
