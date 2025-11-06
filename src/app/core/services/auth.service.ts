@@ -107,6 +107,22 @@ export class AuthService {
   }
 
   /**
+   * Supprime le compte admin et toutes les données associées
+   * ATTENTION: Cette action est IRRÉVERSIBLE
+   */
+  deleteAdminAccount(): Observable<string> {
+    return this.http.delete(`${this.API_URL}/delete-account`, {
+      responseType: 'text'
+    }).pipe(
+      tap(() => {
+        // Nettoyer le localStorage et réinitialiser l'état
+        localStorage.removeItem(this.USER_KEY);
+        this.currentUserSubject.next(null);
+      })
+    );
+  }
+
+  /**
    * Recharge les informations de l'utilisateur actuel
    * Utile après modification de l'entreprise pour mettre à jour le header
    */

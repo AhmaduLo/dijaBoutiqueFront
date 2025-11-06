@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AdminService } from '../../core/services/admin.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -70,7 +71,8 @@ export class AdminDashboardComponent implements OnInit {
     private tenantService: TenantService,
     private notificationService: NotificationService,
     private planService: PlanService,
-    private confirmService: ConfirmService
+    private confirmService: ConfirmService,
+    private router: Router
   ) {
     this.currentUser = this.authService.getCurrentUser() || undefined;
 
@@ -583,6 +585,75 @@ export class AdminDashboardComponent implements OnInit {
       },
       error: (error) => {
         this.notificationService.error(error.error?.message || 'Erreur lors de la modification');
+        this.isSubmitting = false;
+      }
+    });
+  }
+
+  // ==================== SUPPRESSION DU COMPTE ADMIN ====================
+
+  async confirmDeleteAccount(): Promise<void> {
+    // Vérifier que l'utilisateur est bien ADMIN
+    if (!this.authService.isAdmin()) {
+      this.notificationService.error('Seul un administrateur peut supprimer le compte');
+      return;
+    }
+
+    const confirmed = await this.confirmService.confirm({
+      title: '⚠️ SUPPRESSION DÉFINITIVE DU COMPTE',
+      message: `ATTENTION: Vous êtes sur le point de supprimer DÉFINITIVEMENT votre compte administrateur et TOUTES les données de l'entreprise "${this.tenant?.nomEntreprise || 'votre entreprise'}".
+
+Cette action est IRRÉVERSIBLE et supprimera:
+• Votre compte administrateur
+• Tous les utilisateurs
+• Toutes les ventes
+• Tous les achats
+• Toutes les dépenses
+• Tout le stock
+• Toutes les devises
+• Toutes les données de l'entreprise
+
+⚠️ IL N'Y A AUCUN MOYEN DE RÉCUPÉRER CES DONNÉES ⚠️
+
+Êtes-vous ABSOLUMENT SÛR de vouloir continuer ?`,
+      confirmText: '🗑️ OUI, SUPPRIMER TOUT DÉFINITIVEMENT',
+      cancelText: '❌ Non, annuler',
+      type: 'danger'
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    // Double confirmation pour une action aussi critique
+    const doubleConfirm = await this.confirmService.confirm({
+      title: '⚠️ DERNIÈRE CONFIRMATION',
+      message: `C'est votre dernière chance d'annuler.
+
+Confirmez-vous vraiment la suppression IRRÉVERSIBLE de toutes les données de "${this.tenant?.nomEntreprise || 'votre entreprise'}" ?
+
+Cette action prendra effet IMMÉDIATEMENT.`,
+      confirmText: 'OUI, JE CONFIRME LA SUPPRESSION',
+      cancelText: 'NON, ANNULER',
+      type: 'danger'
+    });
+
+    if (!doubleConfirm) {
+      return;
+    }
+
+    // Procéder à la suppression
+    this.isSubmitting = true;
+    this.authService.deleteAdminAccount().subscribe({
+      next: () => {
+        this.notificationService.success('Compte et toutes les données supprimés avec succès');
+        // Redirection immédiate vers la page de login
+        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        this.notificationService.error(
+          error.error?.message || 'Erreur lors de la suppression du compte'
+        );
         this.isSubmitting = false;
       }
     });

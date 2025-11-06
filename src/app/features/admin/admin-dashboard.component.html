@@ -468,6 +468,47 @@
           <p style="margin: 0.5rem 0; color: #1e40af; font-size: 0.9rem; line-height: 1.6;">La modification du nom de l'entreprise met à jour automatiquement l'information pour tous les utilisateurs de votre entreprise.</p>
         </div>
       </div>
+
+      <!-- ZONE DANGEREUSE: Suppression du compte -->
+      <div class="danger-zone" style="max-width: 800px; margin: 2rem auto 0; padding: 2rem; background: white; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); border: 2px solid #fecaca;">
+        <div class="danger-header" style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #fecaca;">
+          <h3 style="margin: 0; font-size: 1.5rem; color: #dc2626; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+            ⚠️ Zone dangereuse
+          </h3>
+        </div>
+
+        <div class="danger-content">
+          <h4 style="margin: 0 0 1rem 0; font-size: 1.125rem; color: #991b1b; font-weight: 600;">
+            Supprimer définitivement le compte
+          </h4>
+          <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); padding: 1.25rem; border-radius: 10px; border-left: 4px solid #dc2626; margin-bottom: 1.5rem;">
+            <p style="margin: 0 0 0.75rem 0; color: #7f1d1d; font-size: 0.95rem; line-height: 1.6; font-weight: 500;">
+              ⚠️ <strong>ATTENTION: Cette action est IRRÉVERSIBLE!</strong>
+            </p>
+            <p style="margin: 0.5rem 0; color: #991b1b; font-size: 0.9rem; line-height: 1.6;">
+              La suppression de votre compte admin entraînera la suppression définitive de:
+            </p>
+            <ul style="margin: 0.75rem 0; padding-left: 1.5rem; color: #991b1b; font-size: 0.9rem; line-height: 1.8;">
+              <li>Votre compte administrateur</li>
+              <li>Tous les comptes utilisateurs (USER, GERANT)</li>
+              <li>Tous les achats et ventes</li>
+              <li>Toutes les dépenses</li>
+              <li>Tout le stock</li>
+              <li>Toutes les données de l'entreprise</li>
+            </ul>
+            <p style="margin: 0.75rem 0 0 0; color: #7f1d1d; font-size: 0.9rem; font-weight: 600;">
+              💡 Aucune récupération ne sera possible après cette action.
+            </p>
+          </div>
+
+          <button
+            class="btn btn-danger"
+            (click)="confirmDeleteAccount()"
+            style="width: 100%; padding: 1rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 10px; background: linear-gradient(135deg, #dc2626, #991b1b); color: white; border: none; cursor: pointer; transition: all 0.3s ease;">
+            🗑️ Supprimer définitivement mon compte et toutes les données
+          </button>
+        </div>
+      </div>
     </div>
   </div>
   <!-- FIN SECTION MON ENTREPRISE -->
