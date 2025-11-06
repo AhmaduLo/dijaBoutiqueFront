@@ -11,6 +11,7 @@ import { Tenant, UpdateTenantDto } from '../models/tenant.model';
 })
 export class TenantService {
   private readonly API_URL = 'http://localhost:8080/api/admin/entreprise';
+  private readonly TENANT_INFO_URL = 'http://localhost:8080/api/tenant/info';
 
   constructor(private http: HttpClient) {}
 
@@ -26,5 +27,13 @@ export class TenantService {
    */
   updateTenant(data: UpdateTenantDto): Observable<Tenant> {
     return this.http.put<Tenant>(this.API_URL, data);
+  }
+
+  /**
+   * Récupère les informations de l'entreprise (accessible à tous les utilisateurs authentifiés)
+   * Utilise l'endpoint /api/tenant/info qui est accessible à USER, GERANT et ADMIN
+   */
+  getTenantInfo(): Observable<Tenant> {
+    return this.http.get<Tenant>(this.TENANT_INFO_URL);
   }
 }

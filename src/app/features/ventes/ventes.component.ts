@@ -849,7 +849,8 @@ export class VentesComponent implements OnInit {
     };
 
     // Récupérer les informations de l'entreprise depuis le TenantService
-    this.tenantService.getCurrentTenant().subscribe({
+    // Utilise l'endpoint /api/tenant/info accessible à tous les utilisateurs authentifiés
+    this.tenantService.getTenantInfo().subscribe({
       next: (tenant: Tenant) => {
         // Générer un numéro de facture séquentiel (FAC-001, FAC-002, etc.)
         const numeroFacture = this.factureNumeroService.genererNumeroFacture();
