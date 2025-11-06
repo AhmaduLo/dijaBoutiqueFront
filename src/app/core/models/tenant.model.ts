@@ -6,6 +6,9 @@ export interface Tenant {
   nomEntreprise: string;
   adresse?: string;
   numeroTelephone: string;
+  nomProprietaire?: string;      // Nom de l'administrateur propriétaire
+  prenomProprietaire?: string;   // Prénom de l'administrateur propriétaire
+  emailProprietaire?: string;    // Email de l'administrateur propriétaire
 }
 
 /**

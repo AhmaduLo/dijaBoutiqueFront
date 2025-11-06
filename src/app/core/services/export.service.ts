@@ -603,7 +603,9 @@ export class ExportService {
         contactYPos += 5;
       }
 
-      doc.text(`Proprietaire : ${options.companyInfo.proprietaire}`, pageWidth - 14, contactYPos, { align: 'right' });
+      if (options.companyInfo.proprietaire) {
+        doc.text(`Proprietaire : ${options.companyInfo.proprietaire}`, pageWidth - 14, contactYPos, { align: 'right' });
+      }
 
       doc.setTextColor(0, 0, 0);
       yPosition = 55;

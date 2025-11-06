@@ -437,7 +437,9 @@ export class RapportsComponent implements OnInit {
       },
       companyInfo: {
         nom: this.tenant?.nomEntreprise || 'Mon Entreprise',
-        proprietaire: this.currentUser ? `${this.currentUser.prenom} ${this.currentUser.nom}` : 'Propriétaire',
+        proprietaire: this.tenant?.prenomProprietaire && this.tenant?.nomProprietaire
+          ? `${this.tenant.prenomProprietaire} ${this.tenant.nomProprietaire}`
+          : '',
         telephone: this.tenant?.numeroTelephone || '',
         adresse: this.tenant?.adresse || ''
       },
