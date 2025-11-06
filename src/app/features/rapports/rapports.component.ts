@@ -348,7 +348,7 @@ export class RapportsComponent implements OnInit {
    */
   loadUserAndTenant(): void {
     this.currentUser = this.authService.getCurrentUser() || undefined;
-    this.tenantService.getCurrentTenant().subscribe({
+    this.tenantService.getTenantInfo().subscribe({
       next: (tenant) => {
         this.tenant = tenant;
       },
