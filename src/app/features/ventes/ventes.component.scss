@@ -399,3 +399,118 @@
     }
   }
 }
+
+// Styles pour la recherche de produits
+.search-produit-container {
+  position: relative;
+
+  .search-produit-input {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #1e40af;
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    }
+
+    &::placeholder {
+      color: #999;
+    }
+  }
+
+  .dropdown-produit {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+
+    &.empty {
+      max-height: auto;
+    }
+
+    .dropdown-item-produit {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.2s ease;
+      border-bottom: 1px solid #f0f0f0;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background: #f0f9ff;
+      }
+
+      &.empty-message {
+        cursor: default;
+        color: #999;
+        justify-content: center;
+        font-style: italic;
+
+        &:hover {
+          background: transparent;
+        }
+      }
+
+      .produit-nom {
+        font-weight: 600;
+        color: #333;
+      }
+
+      .produit-stock {
+        font-size: 0.85rem;
+        color: #10b981;
+        background: #d1fae5;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// Mobile responsive pour la recherche
+@media (max-width: 768px) {
+  .search-produit-container {
+    .search-produit-input {
+      font-size: 0.9rem;
+      padding: 0.6rem;
+    }
+
+    .dropdown-produit {
+      max-height: 200px;
+
+      .dropdown-item-produit {
+        padding: 0.6rem 0.75rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+
+        .produit-nom {
+          font-size: 0.9rem;
+        }
+
+        .produit-stock {
+          font-size: 0.75rem;
+        }
+      }
+    }
+  }
+}

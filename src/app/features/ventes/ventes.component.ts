@@ -143,14 +143,33 @@ import { Tenant } from '../../core/models/tenant.model';
                   </div>
 
                   <div class="form-row">
-                    <div class="form-group flex-2">
+                    <div class="form-group flex-2 search-produit-container">
                       <label>Nom du produit *</label>
-                      <select formControlName="nomProduit" (change)="onProductChangeLigne(i)">
-                        <option value="">-- Sélectionner un produit --</option>
-                        <option *ngFor="let prod of produitsDisponibles" [value]="prod.nomProduit">
-                          {{ prod.nomProduit }} (Stock: {{ prod.stockDisponible }})
-                        </option>
-                      </select>
+                      <input
+                        type="text"
+                        [(ngModel)]="searchTermsProduits[i]"
+                        [ngModelOptions]="{standalone: true}"
+                        (input)="filtrerProduits(i)"
+                        (focus)="afficherDropdownProduit(i)"
+                        (blur)="masquerDropdownProduit(i)"
+                        placeholder="🔍 Rechercher un produit..."
+                        class="search-produit-input"
+                      />
+                      <div class="dropdown-produit" *ngIf="showDropdownProduit[i] && produitsFiltre[i] && produitsFiltre[i].length > 0">
+                        <div
+                          *ngFor="let prod of produitsFiltre[i]"
+                          class="dropdown-item-produit"
+                          (mousedown)="selectionnerProduit(i, prod)"
+                        >
+                          <span class="produit-nom">{{ prod.nomProduit }}</span>
+                          <span class="produit-stock">Stock: {{ prod.stockDisponible }}</span>
+                        </div>
+                      </div>
+                      <div class="dropdown-produit empty" *ngIf="showDropdownProduit[i] && produitsFiltre[i] && produitsFiltre[i].length === 0">
+                        <div class="dropdown-item-produit empty-message">
+                          Aucun produit trouvé
+                        </div>
+                      </div>
                     </div>
 
                     <div class="form-group">
@@ -319,6 +338,11 @@ export class VentesComponent implements OnInit {
     totalGeneral: number;
   };
 
+  // Gestion de la recherche de produits
+  searchTermsProduits: string[] = []; // Un terme de recherche par ligne
+  produitsFiltre: StockDto[][] = []; // Produits filtrés par ligne
+  showDropdownProduit: boolean[] = []; // Affichage du dropdown par ligne
+
   constructor(
     private fb: FormBuilder,
     private venteService: VenteService,
@@ -366,7 +390,13 @@ export class VentesComponent implements OnInit {
    * Ajoute une nouvelle ligne de produit
    */
   ajouterLigneProduit(): void {
+    const index = this.produits.length;
     this.produits.push(this.creerLigneProduit());
+
+    // Initialiser les données de recherche pour cette ligne
+    this.searchTermsProduits[index] = '';
+    this.produitsFiltre[index] = [...this.produitsDisponibles];
+    this.showDropdownProduit[index] = false;
   }
 
   /**
@@ -375,6 +405,10 @@ export class VentesComponent implements OnInit {
   supprimerLigneProduit(index: number): void {
     if (this.produits.length > 1) {
       this.produits.removeAt(index);
+      // Retirer les données de recherche pour cette ligne
+      this.searchTermsProduits.splice(index, 1);
+      this.produitsFiltre.splice(index, 1);
+      this.showDropdownProduit.splice(index, 1);
     } else {
       this.notificationService.warning('Au moins un produit est requis');
     }
@@ -545,6 +579,65 @@ export class VentesComponent implements OnInit {
     return total;
   }
 
+  /**
+   * Filtre les produits en fonction du terme de recherche pour une ligne donnée
+   */
+  filtrerProduits(index: number): void {
+    const searchTerm = this.searchTermsProduits[index]?.toLowerCase().trim() || '';
+
+    if (!searchTerm) {
+      this.produitsFiltre[index] = [...this.produitsDisponibles];
+    } else {
+      this.produitsFiltre[index] = this.produitsDisponibles.filter(produit =>
+        produit.nomProduit.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // Afficher le dropdown si on tape quelque chose
+    this.showDropdownProduit[index] = searchTerm.length > 0;
+  }
+
+  /**
+   * Sélectionne un produit depuis le dropdown
+   */
+  selectionnerProduit(index: number, produit: StockDto): void {
+    const ligneForm = this.produits.at(index) as FormGroup;
+
+    // Mettre à jour le formulaire avec le nom du produit
+    ligneForm.patchValue({
+      nomProduit: produit.nomProduit
+    });
+
+    // Mettre à jour le terme de recherche
+    this.searchTermsProduits[index] = produit.nomProduit;
+
+    // Masquer le dropdown
+    this.showDropdownProduit[index] = false;
+
+    // Déclencher le changement de produit pour récupérer le prix
+    this.onProductChangeLigne(index);
+  }
+
+  /**
+   * Affiche le dropdown de recherche
+   */
+  afficherDropdownProduit(index: number): void {
+    this.showDropdownProduit[index] = true;
+    // Afficher tous les produits par défaut
+    if (!this.searchTermsProduits[index]) {
+      this.produitsFiltre[index] = [...this.produitsDisponibles];
+    }
+  }
+
+  /**
+   * Masque le dropdown après un délai (pour permettre le clic sur un élément)
+   */
+  masquerDropdownProduit(index: number): void {
+    setTimeout(() => {
+      this.showDropdownProduit[index] = false;
+    }, 200);
+  }
+
   refreshData(): void {
     this.notificationService.info('Actualisation en cours...');
     this.loadVentes();
@@ -601,6 +694,11 @@ export class VentesComponent implements OnInit {
       adresseClient: '',
       dateVente: new Date().toISOString().split('T')[0]
     });
+
+    // Réinitialiser les données de recherche
+    this.searchTermsProduits = [];
+    this.produitsFiltre = [];
+    this.showDropdownProduit = [];
 
     // Vider le FormArray et ajouter une ligne par défaut
     this.produits.clear();
