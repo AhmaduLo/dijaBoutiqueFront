@@ -29,6 +29,27 @@ export interface ExportOptions {
   };
 }
 
+export interface RapportExportOptions extends ExportOptions {
+  summaryData?: {
+    chiffreAffaires: number;
+    totalAchats: number;
+    totalDepenses: number;
+    beneficeNet: number;
+    margeBrute: number;
+    margeNette: number;
+  };
+  evolutionData?: Array<{
+    mois: string;
+    annee: number;
+    chiffreAffaires: number;
+    totalAchats: number;
+    totalDepenses: number;
+    beneficeNet: number;
+    margeBrute: number;
+  }>;
+  devise?: string;
+}
+
 export interface FactureOptions {
   numeroFacture: string;
   dateFacture: string;
@@ -542,6 +563,257 @@ export class ExportService {
 
     // Télécharger le PDF
     doc.save(`facture_${options.numeroFacture}.pdf`);
+  }
+
+  /**
+   * Génère un rapport financier amélioré avec résumé exécutif et visuels
+   */
+  genererRapportAmeliore(options: RapportExportOptions): void {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let yPosition = 15;
+
+    // ========== EN-TÊTE AVEC INFORMATIONS DE L'ENTREPRISE ==========
+    if (options.companyInfo) {
+      // Fond bleu-gris foncé pour l'en-tête
+      doc.setFillColor(74, 95, 109);
+      doc.rect(0, 0, pageWidth, 45, 'F');
+
+      // Forme diagonale blanche en bas à droite
+      doc.setFillColor(255, 255, 255);
+      doc.triangle(160, 45, 210, 25, 210, 45, 'F');
+
+      // Nom de l'entreprise
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.text(options.companyInfo.nom, 14, 20);
+
+      // Informations de contact
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      let contactYPos = 18;
+
+      doc.text(`Numero : ${options.companyInfo.telephone}`, pageWidth - 14, contactYPos, { align: 'right' });
+      contactYPos += 5;
+
+      if (options.companyInfo.adresse) {
+        doc.text(`Adresse : ${options.companyInfo.adresse}`, pageWidth - 14, contactYPos, { align: 'right' });
+        contactYPos += 5;
+      }
+
+      doc.text(`Proprietaire : ${options.companyInfo.proprietaire}`, pageWidth - 14, contactYPos, { align: 'right' });
+
+      doc.setTextColor(0, 0, 0);
+      yPosition = 55;
+    }
+
+    // ========== TITRE ET PÉRIODE ==========
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 64, 175);
+    doc.text(options.title, 14, yPosition);
+    yPosition += 8;
+
+    // Date de génération et période
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    const dateGeneration = new Date().toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    doc.text(`Genere le: ${dateGeneration}`, 14, yPosition);
+    yPosition += 4;
+
+    if (options.dateRange?.dateDebut && options.dateRange?.dateFin) {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Periode: ${options.dateRange.dateDebut} au ${options.dateRange.dateFin}`, 14, yPosition);
+      yPosition += 10;
+    }
+
+    // ========== RÉSUMÉ EXÉCUTIF ==========
+    if (options.summaryData) {
+      doc.setFillColor(240, 249, 255);
+      doc.rect(14, yPosition, pageWidth - 28, 50, 'F');
+      doc.setDrawColor(59, 130, 246);
+      doc.setLineWidth(0.5);
+      doc.rect(14, yPosition, pageWidth - 28, 50, 'S');
+
+      yPosition += 8;
+
+      // Titre de la section
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 64, 175);
+      doc.text('RESUME EXECUTIF', 20, yPosition);
+      yPosition += 8;
+
+      // Indicateurs clés en 2 colonnes
+      const colonne1X = 20;
+      const colonne2X = pageWidth / 2 + 5;
+      const devise = options.devise || 'CFA';
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+
+      // Colonne 1
+      doc.setTextColor(100, 100, 100);
+      doc.text('Chiffre d\'Affaires:', colonne1X, yPosition);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(16, 185, 129);
+      doc.text(`${this.formatNumberFR(options.summaryData.chiffreAffaires)} ${devise}`, colonne1X, yPosition + 5);
+
+      yPosition += 12;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Total Achats:', colonne1X, yPosition);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(239, 68, 68);
+      doc.text(`${this.formatNumberFR(options.summaryData.totalAchats)} ${devise}`, colonne1X, yPosition + 5);
+
+      yPosition += 12;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Total Depenses:', colonne1X, yPosition);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(249, 115, 22);
+      doc.text(`${this.formatNumberFR(options.summaryData.totalDepenses)} ${devise}`, colonne1X, yPosition + 5);
+
+      // Colonne 2
+      yPosition -= 24; // Revenir en haut pour la colonne 2
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Benefice Net:', colonne2X, yPosition);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(options.summaryData.beneficeNet >= 0 ? 16 : 220, options.summaryData.beneficeNet >= 0 ? 185 : 38, options.summaryData.beneficeNet >= 0 ? 129 : 38);
+      doc.text(`${this.formatNumberFR(options.summaryData.beneficeNet)} ${devise}`, colonne2X, yPosition + 5);
+
+      yPosition += 12;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Marge Brute:', colonne2X, yPosition);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(options.summaryData.margeBrute >= 0 ? 16 : 220, options.summaryData.margeBrute >= 0 ? 185 : 38, options.summaryData.margeBrute >= 0 ? 129 : 38);
+      doc.text(`${options.summaryData.margeBrute.toFixed(2)}%`, colonne2X, yPosition + 5);
+
+      yPosition += 12;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Marge Nette:', colonne2X, yPosition);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(options.summaryData.margeNette >= 0 ? 16 : 220, options.summaryData.margeNette >= 0 ? 185 : 38, options.summaryData.margeNette >= 0 ? 129 : 38);
+      doc.text(`${options.summaryData.margeNette.toFixed(2)}%`, colonne2X, yPosition + 5);
+
+      yPosition += 15;
+    }
+
+    // ========== TABLEAU D'ÉVOLUTION MENSUELLE ==========
+    if (options.evolutionData && options.evolutionData.length > 0) {
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 64, 175);
+      doc.text('EVOLUTION MENSUELLE', 14, yPosition);
+      yPosition += 5;
+
+      const devise = options.devise || 'CFA';
+      const headers = ['Mois', `CA (${devise})`, `Achats (${devise})`, `Depenses (${devise})`, `Benefice (${devise})`, 'Marge (%)'];
+      const rows = options.evolutionData.map(item => [
+        `${item.mois} ${item.annee}`,
+        this.formatNumberFR(item.chiffreAffaires),
+        this.formatNumberFR(item.totalAchats),
+        this.formatNumberFR(item.totalDepenses),
+        this.formatNumberFR(item.beneficeNet),
+        item.margeBrute.toFixed(2)
+      ]);
+
+      autoTable(doc, {
+        head: [headers],
+        body: rows,
+        startY: yPosition,
+        theme: 'grid',
+        styles: {
+          fontSize: 7,
+          cellPadding: 2,
+          lineColor: [200, 200, 200],
+          lineWidth: 0.1
+        },
+        headStyles: {
+          fillColor: [30, 64, 175],
+          textColor: 255,
+          fontStyle: 'bold',
+          halign: 'center',
+          fontSize: 8
+        },
+        columnStyles: {
+          0: { halign: 'left', fontStyle: 'bold', textColor: [30, 64, 175] },
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right' },
+          4: { halign: 'right', fontStyle: 'bold' },
+          5: { halign: 'right', fontStyle: 'bold' }
+        },
+        didParseCell: (data: any) => {
+          // Colorer les bénéfices et marges selon leur signe
+          if (data.section === 'body' && (data.column.index === 4 || data.column.index === 5)) {
+            const value = parseFloat(data.cell.raw.toString().replace(/\s/g, '').replace(',', '.'));
+            if (value < 0) {
+              data.cell.styles.textColor = [220, 38, 38]; // Rouge
+            } else {
+              data.cell.styles.textColor = [16, 163, 74]; // Vert
+            }
+          }
+        },
+        margin: { left: 14, right: 14 }
+      });
+    }
+
+    // ========== PIED DE PAGE AMÉLIORÉ ==========
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+
+      // Ligne de séparation
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(14, pageHeight - 15, pageWidth - 14, pageHeight - 15);
+
+      // Date et heure de génération
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Genere le: ${dateGeneration}`, 14, pageHeight - 10);
+
+      // Numéro de page
+      doc.text(`Page ${i} sur ${pageCount}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+      // Nom du rapport
+      doc.text(options.filename, pageWidth - 14, pageHeight - 10, { align: 'right' });
+    }
+
+    // Télécharger le PDF
+    doc.save(`${options.filename}.pdf`);
   }
 
   /**

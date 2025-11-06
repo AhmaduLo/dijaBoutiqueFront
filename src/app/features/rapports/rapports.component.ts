@@ -418,45 +418,19 @@ export class RapportsComponent implements OnInit {
   }
 
   /**
-   * Export du rapport en PDF avec informations de l'entreprise
+   * Export du rapport en PDF avec informations de l'entreprise (version améliorée)
    */
   exporterPDF(): void {
     if (!this.rapport) return;
 
-    // Préparer les données de la période pour l'export
-    const periodeData = [{
-      'Période': `${this.rapport.periode.dateDebut} - ${this.rapport.periode.dateFin}`,
-      'Chiffre d\'Affaires': this.rapport.periode.chiffreAffaires,
-      'Total Achats': this.rapport.periode.totalAchats,
-      'Total Dépenses': this.rapport.periode.totalDepenses,
-      'Bénéfice Net': this.rapport.periode.beneficeNet,
-      'Marge Brute (%)': this.rapport.periode.margeBrute.toFixed(2),
-      'Marge Nette (%)': this.rapport.periode.margeNette.toFixed(2),
-      'Nombre Achats': this.rapport.periode.nombreAchats,
-      'Nombre Ventes': this.rapport.periode.nombreVentes,
-      'Nombre Dépenses': this.rapport.periode.nombreDepenses
-    }];
-
-    const columns = [
-      { header: 'Période', field: 'Période' },
-      { header: `CA (${this.defaultCurrency?.symbole || 'CFA'})`, field: 'Chiffre d\'Affaires', format: (val: number) => val.toFixed(2) },
-      { header: `Achats (${this.defaultCurrency?.symbole || 'CFA'})`, field: 'Total Achats', format: (val: number) => val.toFixed(2) },
-      { header: `Dépenses (${this.defaultCurrency?.symbole || 'CFA'})`, field: 'Total Dépenses', format: (val: number) => val.toFixed(2) },
-      { header: `Bénéfice (${this.defaultCurrency?.symbole || 'CFA'})`, field: 'Bénéfice Net', format: (val: number) => val.toFixed(2) },
-      { header: 'Marge Brute (%)', field: 'Marge Brute (%)' },
-      { header: 'Marge Nette (%)', field: 'Marge Nette (%)' },
-      { header: 'Nb Achats', field: 'Nombre Achats' },
-      { header: 'Nb Ventes', field: 'Nombre Ventes' },
-      { header: 'Nb Dépenses', field: 'Nombre Dépenses' }
-    ];
-
     const nomFichier = `rapport_${this.typeRapport}_${new Date().toISOString().split('T')[0]}`;
+    const devise = this.defaultCurrency?.symbole || 'CFA';
 
     const exportOptions = {
       filename: nomFichier,
       title: `Rapport ${this.typeRapport.charAt(0).toUpperCase() + this.typeRapport.slice(1)}`,
-      columns,
-      data: periodeData,
+      columns: [], // Pas besoin pour la nouvelle méthode
+      data: [], // Pas besoin pour la nouvelle méthode
       dateRange: {
         dateDebut: this.rapport.periode.dateDebut,
         dateFin: this.rapport.periode.dateFin
@@ -466,10 +440,20 @@ export class RapportsComponent implements OnInit {
         proprietaire: this.currentUser ? `${this.currentUser.prenom} ${this.currentUser.nom}` : 'Propriétaire',
         telephone: this.tenant?.numeroTelephone || '',
         adresse: this.tenant?.adresse || ''
-      }
+      },
+      summaryData: {
+        chiffreAffaires: this.rapport.periode.chiffreAffaires,
+        totalAchats: this.rapport.periode.totalAchats,
+        totalDepenses: this.rapport.periode.totalDepenses,
+        beneficeNet: this.rapport.periode.beneficeNet,
+        margeBrute: this.rapport.periode.margeBrute,
+        margeNette: this.rapport.periode.margeNette
+      },
+      evolutionData: this.rapport.evolutionMensuelle,
+      devise: devise
     };
 
-    this.exportService.exportToPDF(exportOptions);
+    this.exportService.genererRapportAmeliore(exportOptions);
     this.notificationService.success('Rapport exporté en PDF avec succès');
   }
 
