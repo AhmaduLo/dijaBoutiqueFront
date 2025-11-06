@@ -785,6 +785,10 @@ export class VentesComponent implements OnInit {
       this.notificationService.success(`${ventes.length} vente(s) enregistrée(s) avec succès`);
       this.closeForm();
       this.loadVentes();
+      // Recharger les produits disponibles pour mettre à jour les stocks
+      this.loadProduitsDisponibles();
+      // Recharger les prix de vente suggérés
+      this.chargerPrixVenteSuggeres();
       this.isSubmitting = false;
 
       // Proposer la création de facture

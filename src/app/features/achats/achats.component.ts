@@ -507,6 +507,8 @@ export class AchatsComponent implements OnInit {
         );
         this.closeForm();
         this.loadAchats();
+        // Recharger la liste des produits pour mettre à jour les stocks
+        this.loadProduitsExistants();
         this.isSubmitting = false;
       },
       error: (error) => {
