@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { Vente } from '../../core/models/vente.model';
 import { VenteService } from '../../core/services/vente.service';
@@ -86,68 +86,113 @@ import { ProduitPourVente } from '../../core/models/produit-pour-vente.model';
       </div>
 
       <div class="modal" *ngIf="showForm" (click)="closeFormIfOutside($event)">
-        <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-content modal-large" (click)="$event.stopPropagation()">
           <div class="modal-header">
             <h2>{{ isEditing ? 'Modifier' : 'Ajouter' }} une vente</h2>
             <button class="close-btn" (click)="closeForm()">×</button>
           </div>
           <form [formGroup]="venteForm" (ngSubmit)="onSubmit()">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Nom du produit *</label>
-                <select formControlName="nomProduit" (change)="onProductChange()">
-                  <option value="">-- Sélectionner un produit --</option>
-                  <option *ngFor="let produit of produitsDisponibles" [value]="produit.nomProduit">
-                    {{ produit.nomProduit }} (Stock: {{ produit.stockDisponible }})
-                  </option>
-                </select>
-                <div class="error" *ngIf="venteForm.get('nomProduit')?.invalid && venteForm.get('nomProduit')?.touched">
-                  Veuillez sélectionner un produit
-                </div>
-                <div class="info-stock" *ngIf="selectedProduct">
-                  <small>
-                    📦 Stock disponible: {{ selectedProduct.stockDisponible }} unités
-                    <span *ngIf="selectedProduct.prixVenteSuggere && selectedProduct.prixVenteSuggere > 0">
-                      | 💰 Prix suggéré: {{ selectedProduct.prixVenteSuggere | currencyEur }} (depuis achat)
-                    </span>
-                    <span *ngIf="(!selectedProduct.prixVenteSuggere || selectedProduct.prixVenteSuggere <= 0) && selectedProduct.prixMoyenVente > 0">
-                      | 💰 Prix moyen: {{ selectedProduct.prixMoyenVente | currencyEur }}
-                    </span>
+            <!-- Informations générales -->
+            <div class="form-section">
+              <h3>👤 Informations de la vente</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Client</label>
+                  <input type="text" formControlName="client" placeholder="Ex: Farto Diallo (optionnel)" />
+                  <small style="color: #666; display: block; margin-top: 0.25rem;">
+                    Si vide, "Client" sera utilisé
                   </small>
                 </div>
-              </div>
-              <div class="form-group">
-                <label>Client</label>
-                <input type="text" formControlName="client" placeholder="Ex: Marie Martin (optionnel)" />
-                <small style="color: #666; display: block; margin-top: 0.25rem;">
-                  Si vide, "Client" sera utilisé
-                </small>
+                <div class="form-group">
+                  <label>Date de vente *</label>
+                  <input type="date" formControlName="dateVente" />
+                </div>
               </div>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Quantité *</label>
-                <input type="number" formControlName="quantite" min="1" (input)="calculerTotal()" />
+
+            <!-- Liste des produits -->
+            <div class="form-section">
+              <h3>🛒 Produits</h3>
+
+              <div formArrayName="produits" class="produits-list">
+                <div *ngFor="let produit of produits.controls; let i = index" [formGroupName]="i" class="produit-ligne">
+                  <div class="ligne-header">
+                    <span class="ligne-numero">Produit {{ i + 1 }}</span>
+                    <button
+                      type="button"
+                      class="btn-icon btn-delete-small"
+                      (click)="supprimerLigneProduit(i)"
+                      [disabled]="produits.length === 1"
+                      title="Supprimer"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group flex-2">
+                      <label>Nom du produit *</label>
+                      <select formControlName="nomProduit" (change)="onProductChangeLigne(i)">
+                        <option value="">-- Sélectionner un produit --</option>
+                        <option *ngFor="let prod of produitsDisponibles" [value]="prod.nomProduit">
+                          {{ prod.nomProduit }} (Stock: {{ prod.stockDisponible }})
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Quantité *</label>
+                      <input
+                        type="number"
+                        formControlName="quantite"
+                        min="1"
+                        (input)="calculerTotalLigne(i)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Prix unitaire ({{ selectedCurrency?.symbole || 'CFA' }}) *</label>
+                      <input
+                        type="number"
+                        formControlName="prixUnitaire"
+                        min="0"
+                        step="0.01"
+                        (input)="calculerTotalLigne(i)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Total</label>
+                      <input
+                        type="number"
+                        formControlName="prixTotal"
+                        readonly
+                        class="readonly total-display"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="form-group">
-                <label>Prix unitaire ({{ selectedCurrency?.symbole || 'CFA' }}) *</label>
-                <input type="number" formControlName="prixUnitaire" min="0" step="0.01" (input)="calculerTotal()" />
+
+              <!-- Bouton ajouter produit (en bas de la liste) -->
+              <button type="button" class="btn btn-block btn-add-product" (click)="ajouterLigneProduit()">
+                + Ajouter un produit
+              </button>
+
+              <!-- Total général -->
+              <div class="total-general">
+                <strong>Total général:</strong>
+                <span class="montant-total">
+                  {{ calculerTotalGeneral() | number:'1.0-2':'fr-FR' }}
+                  <span class="currency-badge">{{ selectedCurrency?.symbole || 'CFA' }}</span>
+                </span>
               </div>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Date de vente *</label>
-                <input type="date" formControlName="dateVente" />
-              </div>
-              <div class="form-group">
-                <label>Prix total ({{ selectedCurrency?.symbole || 'CFA' }})</label>
-                <input type="number" formControlName="prixTotal" readonly class="readonly" />
-              </div>
-            </div>
+
             <div class="form-actions">
               <button type="button" class="btn btn-secondary" (click)="closeForm()">Annuler</button>
               <button type="submit" class="btn btn-primary" [disabled]="venteForm.invalid || isSubmitting">
-                {{ isSubmitting ? 'Enregistrement...' : (isEditing ? 'Modifier' : 'Ajouter') }}
+                {{ isSubmitting ? 'Enregistrement...' : 'Enregistrer' }}
               </button>
             </div>
           </form>
@@ -263,13 +308,49 @@ export class VentesComponent implements OnInit {
     private authService: AuthService
   ) {
     this.venteForm = this.fb.group({
-      nomProduit: ['', Validators.required],
       client: [''],
+      dateVente: [new Date().toISOString().split('T')[0], Validators.required],
+      produits: this.fb.array([]) // Tableau de produits
+    });
+    // Ajouter une ligne par défaut
+    this.ajouterLigneProduit();
+  }
+
+  /**
+   * Récupère le FormArray des produits
+   */
+  get produits(): FormArray {
+    return this.venteForm.get('produits') as FormArray;
+  }
+
+  /**
+   * Crée un FormGroup pour une ligne de produit
+   */
+  creerLigneProduit(): FormGroup {
+    return this.fb.group({
+      nomProduit: ['', Validators.required],
       quantite: [1, [Validators.required, Validators.min(1)]],
       prixUnitaire: [0, [Validators.required, Validators.min(0)]],
-      dateVente: [new Date().toISOString().split('T')[0], Validators.required],
       prixTotal: [{ value: 0, disabled: true }]
     });
+  }
+
+  /**
+   * Ajoute une nouvelle ligne de produit
+   */
+  ajouterLigneProduit(): void {
+    this.produits.push(this.creerLigneProduit());
+  }
+
+  /**
+   * Supprime une ligne de produit
+   */
+  supprimerLigneProduit(index: number): void {
+    if (this.produits.length > 1) {
+      this.produits.removeAt(index);
+    } else {
+      this.notificationService.warning('Au moins un produit est requis');
+    }
   }
 
   ngOnInit(): void {
@@ -373,6 +454,70 @@ export class VentesComponent implements OnInit {
     }
   }
 
+  /**
+   * Gère le changement de produit pour une ligne spécifique
+   */
+  onProductChangeLigne(index: number): void {
+    const ligneForm = this.produits.at(index) as FormGroup;
+    const nomProduit = ligneForm.get('nomProduit')?.value;
+
+    if (nomProduit) {
+      const produit = this.produitsDisponibles.find(p => p.nomProduit === nomProduit);
+
+      if (produit) {
+        let prixSuggere = 0;
+
+        // Priorité 1: Prix du cache (dernier prix d'achat)
+        if (this.prixVenteSuggereCache.has(nomProduit)) {
+          prixSuggere = this.prixVenteSuggereCache.get(nomProduit)!;
+        }
+        // Priorité 2: Prix de vente suggéré du produit
+        else if (produit.prixVenteSuggere && produit.prixVenteSuggere > 0) {
+          prixSuggere = produit.prixVenteSuggere;
+        }
+        // Priorité 3: Prix moyen de vente
+        else if (produit.prixMoyenVente && produit.prixMoyenVente > 0) {
+          prixSuggere = produit.prixMoyenVente;
+        }
+
+        if (prixSuggere > 0) {
+          ligneForm.patchValue({
+            prixUnitaire: prixSuggere
+          });
+          this.calculerTotalLigne(index);
+        }
+      }
+    }
+  }
+
+  /**
+   * Calcule le total pour une ligne spécifique
+   */
+  calculerTotalLigne(index: number): void {
+    const ligneForm = this.produits.at(index) as FormGroup;
+    const quantite = ligneForm.get('quantite')?.value || 0;
+    const prixUnitaire = ligneForm.get('prixUnitaire')?.value || 0;
+    const total = Number(quantite) * Number(prixUnitaire);
+
+    ligneForm.patchValue({
+      prixTotal: total
+    }, { emitEvent: false });
+  }
+
+  /**
+   * Calcule le total général de toutes les lignes
+   */
+  calculerTotalGeneral(): number {
+    let total = 0;
+    for (let i = 0; i < this.produits.length; i++) {
+      const ligneForm = this.produits.at(i) as FormGroup;
+      const quantite = ligneForm.get('quantite')?.value || 0;
+      const prixUnitaire = ligneForm.get('prixUnitaire')?.value || 0;
+      total += Number(quantite) * Number(prixUnitaire);
+    }
+    return total;
+  }
+
   refreshData(): void {
     this.notificationService.info('Actualisation en cours...');
     this.loadVentes();
@@ -387,9 +532,15 @@ export class VentesComponent implements OnInit {
 
     venteObservable.subscribe({
       next: (ventes) => {
-        this.ventes = ventes.sort((a, b) =>
-          new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime()
-        );
+        // Tri du plus récent au plus ancien (par date puis par ID décroissant)
+        this.ventes = ventes.sort((a, b) => {
+          const dateCompare = new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime();
+          // Si même date, trier par ID décroissant (les plus récents en premier)
+          if (dateCompare === 0 && a.id && b.id) {
+            return b.id - a.id;
+          }
+          return dateCompare;
+        });
         this.filteredVentes = [...this.ventes];
         this.isLoading = false;
       },
@@ -415,14 +566,16 @@ export class VentesComponent implements OnInit {
     this.showForm = true;
     this.isEditing = false;
     this.selectedProduct = undefined;
+
+    // Réinitialiser le formulaire
     this.venteForm.reset({
-      nomProduit: '',
       client: '',
-      quantite: 1,
-      prixUnitaire: 0,
-      dateVente: new Date().toISOString().split('T')[0],
-      prixTotal: 0
+      dateVente: new Date().toISOString().split('T')[0]
     });
+
+    // Vider le FormArray et ajouter une ligne par défaut
+    this.produits.clear();
+    this.ajouterLigneProduit();
   }
 
   closeForm(): void {
@@ -448,35 +601,57 @@ export class VentesComponent implements OnInit {
 
   onSubmit(): void {
     if (this.venteForm.invalid) {
+      this.notificationService.warning('Veuillez remplir tous les champs obligatoires');
       Object.keys(this.venteForm.controls).forEach(key => {
         this.venteForm.get(key)?.markAsTouched();
       });
       return;
     }
+
     this.isSubmitting = true;
     const formValue = this.venteForm.getRawValue();
-    const vente: Vente = {
-      ...formValue,
-      client: formValue.client?.trim() || 'Client',
-      prixTotal: this.venteService.calculerPrixTotal(formValue.quantite, formValue.prixUnitaire),
+    const client = formValue['client']?.trim() || 'Client';
+    const dateVente = formValue['dateVente'];
+    const produits = formValue['produits'];
+
+    // Créer une vente pour chaque produit
+    const ventesACreer: Vente[] = produits.map((produit: any) => ({
+      nomProduit: produit['nomProduit'],
+      client: client,
+      quantite: Number(produit['quantite']),
+      prixUnitaire: Number(produit['prixUnitaire']),
+      prixTotal: Number(produit['quantite']) * Number(produit['prixUnitaire']),
+      dateVente: dateVente,
       deviseId: this.selectedCurrency?.id,
       deviseCode: this.selectedCurrency?.code,
       deviseSymbole: this.selectedCurrency?.symbole
-    };
-    const operation = this.isEditing && this.currentVenteId
-      ? this.venteService.update(this.currentVenteId, vente)
-      : this.venteService.create(vente);
-    operation.subscribe({
+    }));
+
+    // Enregistrer toutes les ventes (appels API séquentiels)
+    this.enregistrerVentesSequentiellement(ventesACreer, 0);
+  }
+
+  /**
+   * Enregistre les ventes une par une de manière séquentielle
+   */
+  private enregistrerVentesSequentiellement(ventes: Vente[], index: number): void {
+    if (index >= ventes.length) {
+      // Toutes les ventes ont été enregistrées
+      this.notificationService.success(`${ventes.length} vente(s) enregistrée(s) avec succès`);
+      this.closeForm();
+      this.loadVentes();
+      this.isSubmitting = false;
+      return;
+    }
+
+    // Enregistrer la vente courante
+    this.venteService.create(ventes[index]).subscribe({
       next: () => {
-        this.notificationService.success(
-          this.isEditing ? 'Vente modifiée avec succès' : 'Vente ajoutée avec succès'
-        );
-        this.closeForm();
-        this.loadVentes();
-        this.isSubmitting = false;
+        // Passer à la vente suivante
+        this.enregistrerVentesSequentiellement(ventes, index + 1);
       },
       error: (error) => {
-        this.notificationService.error(error.message);
+        this.notificationService.error(`Erreur lors de l'enregistrement du produit ${ventes[index].nomProduit}: ${error.message}`);
         this.isSubmitting = false;
       }
     });
