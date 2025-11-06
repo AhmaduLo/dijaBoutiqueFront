@@ -64,8 +64,8 @@ import { AuthService } from '../../core/services/auth.service';
         </div>
       </div>
 
-      <!-- Cartes de résumé -->
-      <div class="summary-cards" *ngIf="resume">
+      <!-- Cartes de résumé - Visible seulement pour Admin/Gérant -->
+      <div class="summary-cards" *ngIf="resume && isAdminOrGerant()">
         <div class="card card-total">
           <div class="card-icon">📊</div>
           <div class="card-content">
@@ -109,8 +109,43 @@ import { AuthService } from '../../core/services/auth.service';
         </div>
       </div>
 
-      <!-- Alertes -->
-      <div class="alerts-section" *ngIf="alertes && alertes.length > 0">
+      <!-- Cartes simplifiées pour utilisateurs -->
+      <div class="summary-cards" *ngIf="resume && !isAdminOrGerant()">
+        <div class="card card-total">
+          <div class="card-icon">📊</div>
+          <div class="card-content">
+            <h3>Total Produits</h3>
+            <p class="card-value">{{ resume.totalProduits }}</p>
+          </div>
+        </div>
+
+        <div class="card card-success">
+          <div class="card-icon">✓</div>
+          <div class="card-content">
+            <h3>En Stock</h3>
+            <p class="card-value">{{ resume.produitsEnStock }}</p>
+          </div>
+        </div>
+
+        <div class="card card-warning">
+          <div class="card-icon">⚠</div>
+          <div class="card-content">
+            <h3>Stock Bas</h3>
+            <p class="card-value">{{ resume.produitsStockBas }}</p>
+          </div>
+        </div>
+
+        <div class="card card-danger">
+          <div class="card-icon">✗</div>
+          <div class="card-content">
+            <h3>Rupture</h3>
+            <p class="card-value">{{ resume.produitsEnRupture }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alertes - Visible seulement pour Admin/Gérant -->
+      <div class="alerts-section" *ngIf="alertes && alertes.length > 0 && isAdminOrGerant()">
         <h2>🔔 Alertes Stock</h2>
         <div class="alerts-list">
           <div
@@ -163,7 +198,8 @@ import { AuthService } from '../../core/services/auth.service';
 
       <!-- Tableau des stocks -->
       <div class="stock-table" *ngIf="!isLoading">
-        <table *ngIf="filteredStocks.length > 0">
+        <!-- Tableau complet pour Admin/Gérant -->
+        <table *ngIf="filteredStocks.length > 0 && isAdminOrGerant()">
           <thead>
             <tr>
               <th>Produit</th>
@@ -221,6 +257,48 @@ import { AuthService } from '../../core/services/auth.service';
               <td class="bold">{{ calculateTotalValue() | number:'1.0-2':'fr-FR' }} <span class="currency-symbol">{{ defaultCurrency?.symbole || 'CFA' }}</span></td>
               <td class="bold">{{ calculateTotalMarge() | number:'1.0-2':'fr-FR' }} <span class="currency-symbol">{{ defaultCurrency?.symbole || 'CFA' }}</span></td>
               <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- Tableau simplifié pour utilisateurs simples -->
+        <table *ngIf="filteredStocks.length > 0 && !isAdminOrGerant()">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Stock</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let stock of filteredStocks" [ngClass]="'row-' + stock.statut.toLowerCase()">
+              <td class="bold">{{ stock.nomProduit }}</td>
+              <td>
+                <span class="stock-quantity" [style.color]="getStatutColor(stock.statut)">
+                  {{ stock.stockDisponible }}
+                </span>
+                <div class="progress-bar">
+                  <div
+                    class="progress-fill"
+                    [style.width.%]="calculerPourcentageStock(stock)"
+                    [style.background-color]="getStatutColor(stock.statut)">
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span
+                  class="status-badge"
+                  [style.background-color]="getStatutColor(stock.statut)">
+                  {{ getStatutIcon(stock.statut) }} {{ getStatutLabel(stock.statut) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td class="text-right"><strong>Total :</strong></td>
+              <td class="bold">{{ calculateTotalStock() }}</td>
+              <td></td>
             </tr>
           </tfoot>
         </table>

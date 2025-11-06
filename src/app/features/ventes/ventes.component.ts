@@ -25,6 +25,9 @@ import { ProduitPourVente } from '../../core/models/produit-pour-vente.model';
       <div class="page-header">
         <h1>💰 Gestion des Ventes</h1>
         <div style="display: flex; gap: 1rem;">
+          <button class="btn btn-primary" (click)="refreshData()">
+            🔄 Actualiser
+          </button>
           <button class="btn btn-success" (click)="openExportModal()" *ngIf="isAdminOrGerant()">
             📊 Exporter
           </button>
@@ -368,6 +371,11 @@ export class VentesComponent implements OnInit {
     } else {
       this.selectedProduct = undefined;
     }
+  }
+
+  refreshData(): void {
+    this.notificationService.info('Actualisation en cours...');
+    this.loadVentes();
   }
 
   loadVentes(): void {

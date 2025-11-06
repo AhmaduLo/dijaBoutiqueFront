@@ -25,6 +25,9 @@ import { ExportService } from '../../core/services/export.service';
       <div class="page-header">
         <h1>🛒 Gestion des Achats</h1>
         <div style="display: flex; gap: 1rem;">
+          <button class="btn btn-primary" (click)="refreshData()">
+            🔄 Actualiser
+          </button>
           <button class="btn btn-success" (click)="openExportModal()">
             📊 Exporter
           </button>
@@ -386,6 +389,11 @@ export class AchatsComponent implements OnInit {
       // Le nom du nouveau produit sera utilisé lors de la soumission
       this.achatForm.get('nomProduit')?.setErrors(null);
     }
+  }
+
+  refreshData(): void {
+    this.notificationService.info('Actualisation en cours...');
+    this.loadAchats();
   }
 
   loadAchats(): void {

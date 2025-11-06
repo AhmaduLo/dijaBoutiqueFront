@@ -15,57 +15,66 @@ import { User } from '../../../core/models/auth.model';
   template: `
     <header class="header">
       <div class="header-content">
-        <div class="logo">
-          <h1>✨ {{ getCompanyName() }}</h1>
-          <p class="subtitle" *ngIf="isAuthenticated">Gestion commerciale</p>
-          <p class="subtitle" *ngIf="!isAuthenticated">HeasyStock - Gestion simplifiée</p>
+        <div class="header-top">
+          <div class="logo">
+            <h1>✨ {{ getCompanyName() }}</h1>
+            <p class="subtitle" *ngIf="isAuthenticated">Gestion commerciale</p>
+            <p class="subtitle" *ngIf="!isAuthenticated">HeasyStock - Gestion simplifiée</p>
+          </div>
+
+          <div class="header-right">
+            <div class="user-info" *ngIf="isAuthenticated && currentUser">
+              <div class="user-menu" (click)="toggleUserMenu()">
+                <span class="user-name">👤 {{ currentUser.prenom }} {{ currentUser.nom }}</span>
+                <span class="dropdown-arrow">▼</span>
+              </div>
+              <div class="user-dropdown" *ngIf="showUserMenu">
+                <a routerLink="/admin" *ngIf="isAdmin()" (click)="closeUserMenu()">
+                  <span class="icon">👑</span>
+                  Administration
+                </a>
+                <button class="dropdown-item" (click)="logout()">
+                  <span class="icon">🚪</span>
+                  Déconnexion
+                </button>
+              </div>
+            </div>
+            <div class="auth-links" *ngIf="!isAuthenticated">
+              <a routerLink="/login" class="btn-link">Connexion</a>
+              <a routerLink="/register" class="btn-link btn-primary">Inscription</a>
+            </div>
+            <button class="burger-menu" *ngIf="isAuthenticated" (click)="toggleMobileMenu()">
+              <span class="burger-icon">{{ showMobileMenu ? '✕' : '☰' }}</span>
+            </button>
+          </div>
         </div>
-        <nav class="nav-menu" *ngIf="isAuthenticated">
-          <a routerLink="/dashboard" routerLinkActive="active" *ngIf="isAdminOrGerant()">
+
+        <nav class="nav-menu" *ngIf="isAuthenticated" [class.show-mobile]="showMobileMenu">
+          <a routerLink="/dashboard" routerLinkActive="active" *ngIf="isAdminOrGerant()" (click)="closeMobileMenu()">
             <span class="icon">📊</span>
             Tableau de bord
           </a>
-          <a routerLink="/achats" routerLinkActive="active" *ngIf="isAdminOrGerant()">
+          <a routerLink="/achats" routerLinkActive="active" *ngIf="isAdminOrGerant()" (click)="closeMobileMenu()">
             <span class="icon">🛒</span>
             Achats
           </a>
-          <a routerLink="/ventes" routerLinkActive="active">
+          <a routerLink="/ventes" routerLinkActive="active" (click)="closeMobileMenu()">
             <span class="icon">💰</span>
             Ventes
           </a>
-          <a routerLink="/depenses" routerLinkActive="active" *ngIf="isAdminOrGerant()">
+          <a routerLink="/depenses" routerLinkActive="active" *ngIf="isAdminOrGerant()" (click)="closeMobileMenu()">
             <span class="icon">💳</span>
             Dépenses
           </a>
-          <a routerLink="/stock" routerLinkActive="active">
+          <a routerLink="/stock" routerLinkActive="active" (click)="closeMobileMenu()">
             <span class="icon">📦</span>
             Stock
           </a>
-          <a routerLink="/rapports" routerLinkActive="active" *ngIf="isAdminOrGerant()">
+          <a routerLink="/rapports" routerLinkActive="active" *ngIf="isAdminOrGerant()" (click)="closeMobileMenu()">
             <span class="icon">📈</span>
             Rapports
           </a>
         </nav>
-        <div class="user-info" *ngIf="isAuthenticated && currentUser">
-          <div class="user-menu" (click)="toggleUserMenu()">
-            <span class="user-name">👤 {{ currentUser.prenom }} {{ currentUser.nom }}</span>
-            <span class="dropdown-arrow">▼</span>
-          </div>
-          <div class="user-dropdown" *ngIf="showUserMenu">
-            <a routerLink="/admin" *ngIf="isAdmin()" (click)="closeUserMenu()">
-              <span class="icon">👑</span>
-              Administration
-            </a>
-            <button class="dropdown-item" (click)="logout()">
-              <span class="icon">🚪</span>
-              Déconnexion
-            </button>
-          </div>
-        </div>
-        <div class="auth-links" *ngIf="!isAuthenticated">
-          <a routerLink="/login" class="btn-link">Connexion</a>
-          <a routerLink="/register" class="btn-link btn-primary">Inscription</a>
-        </div>
       </div>
     </header>
   `,
@@ -75,6 +84,7 @@ export class HeaderComponent implements OnInit {
   isAuthenticated = false;
   currentUser: User | null = null;
   showUserMenu = false;
+  showMobileMenu = false;
 
   constructor(
     private authService: AuthService,
@@ -96,6 +106,14 @@ export class HeaderComponent implements OnInit {
 
   closeUserMenu(): void {
     this.showUserMenu = false;
+  }
+
+  toggleMobileMenu(): void {
+    this.showMobileMenu = !this.showMobileMenu;
+  }
+
+  closeMobileMenu(): void {
+    this.showMobileMenu = false;
   }
 
   isAdmin(): boolean {

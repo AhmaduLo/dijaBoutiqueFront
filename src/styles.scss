@@ -81,9 +81,90 @@ body {
   padding: 0;
 }
 
+// Styles des boutons
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  font-family: inherit;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &.btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #1e40af);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #2563eb, #1e3a8a);
+    }
+  }
+
+  &.btn-secondary {
+    background: linear-gradient(135deg, #64748b, #475569);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #475569, #334155);
+    }
+  }
+
+  &.btn-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #059669, #047857);
+    }
+  }
+
+  &.btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+    }
+  }
+
+  &.btn-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #d97706, #b45309);
+    }
+  }
+}
+
 // Responsive
 @media (max-width: 768px) {
   html {
     font-size: 14px;
+  }
+
+  .btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
   }
 }

@@ -103,6 +103,17 @@ export class AdminDashboardComponent implements OnInit {
     this.loadData();
   }
 
+  refreshData(): void {
+    this.notificationService.info('Actualisation en cours...');
+    if (this.activeTab === 'users') {
+      this.loadData();
+    } else if (this.activeTab === 'currencies') {
+      this.loadCurrencies();
+    } else if (this.activeTab === 'company') {
+      this.loadTenant();
+    }
+  }
+
   loadData(): void {
     this.isLoading = true;
     Promise.all([

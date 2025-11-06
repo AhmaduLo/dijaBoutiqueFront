@@ -28,19 +28,24 @@ import { Currency } from '../../core/models/currency.model';
             <span>Devise: <strong>{{ defaultCurrency.nom }} ({{ defaultCurrency.symbole }})</strong></span>
           </div>
         </div>
-        <div class="period-selector">
-          <label>Période :</label>
-          <select [(ngModel)]="selectedPeriod" (change)="onPeriodChange()">
-            <option value="current-month">Mois en cours</option>
-            <option value="last-month">Mois dernier</option>
-            <option value="current-quarter">Trimestre en cours</option>
-            <option value="current-year">Année en cours</option>
-            <option value="custom">Personnalisée</option>
-          </select>
-          <div class="custom-dates" *ngIf="selectedPeriod === 'custom'">
-            <input type="date" [(ngModel)]="customDateDebut" (change)="loadMetrics()" />
-            <span>au</span>
-            <input type="date" [(ngModel)]="customDateFin" (change)="loadMetrics()" />
+        <div style="display: flex; gap: 1rem; align-items: flex-start;">
+          <button class="btn btn-primary" (click)="refreshData()">
+            🔄 Actualiser
+          </button>
+          <div class="period-selector">
+            <label>Période :</label>
+            <select [(ngModel)]="selectedPeriod" (change)="onPeriodChange()">
+              <option value="current-month">Mois en cours</option>
+              <option value="last-month">Mois dernier</option>
+              <option value="current-quarter">Trimestre en cours</option>
+              <option value="current-year">Année en cours</option>
+              <option value="custom">Personnalisée</option>
+            </select>
+            <div class="custom-dates" *ngIf="selectedPeriod === 'custom'">
+              <input type="date" [(ngModel)]="customDateDebut" (change)="loadMetrics()" />
+              <span>au</span>
+              <input type="date" [(ngModel)]="customDateFin" (change)="loadMetrics()" />
+            </div>
           </div>
         </div>
       </div>
@@ -264,6 +269,14 @@ export class DashboardComponent implements OnInit {
     if (this.selectedPeriod !== 'custom') {
       this.loadMetrics();
     }
+  }
+
+  /**
+   * Actualise les données
+   */
+  refreshData(): void {
+    this.notificationService.info('Actualisation en cours...');
+    this.loadMetrics();
   }
 
   /**
