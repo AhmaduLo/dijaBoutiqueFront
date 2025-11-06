@@ -23,7 +23,38 @@ export interface ExportOptions {
     proprietaire: string;
     telephone: string;
     adresse?: string;
+    email?: string;
+    ville?: string;
+    codePostal?: string;
   };
+}
+
+export interface FactureOptions {
+  numeroFacture: string;
+  dateFacture: string;
+  entreprise: {
+    nom: string;
+    adresse?: string;
+    ville?: string;
+    codePostal?: string;
+    telephone: string;
+    email?: string;
+  };
+  client: {
+    nom: string;
+    entreprise?: string;
+    adresse?: string;
+    telephone?: string;
+    email?: string;
+  };
+  produits: Array<{
+    designation: string;
+    quantite: number;
+    prixUnitaire: number;
+    total: number;
+  }>;
+  totalGeneral: number;
+  devise: string;
 }
 
 /**
@@ -302,6 +333,215 @@ export class ExportService {
       month: '2-digit',
       year: 'numeric'
     });
+  }
+
+  /**
+   * Formate un nombre au format français avec espaces comme séparateurs de milliers
+   * Compatible avec jsPDF (évite les problèmes d'encodage avec toLocaleString)
+   */
+  private formatNumberFR(num: number): string {
+    // Convertir en string avec 2 décimales
+    const fixedNum = num.toFixed(2);
+    const [integerPart, decimalPart] = fixedNum.split('.');
+
+    // Ajouter des espaces tous les 3 chiffres depuis la droite
+    const withSpaces = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+    // Retourner avec la partie décimale
+    return `${withSpaces},${decimalPart}`;
+  }
+
+  /**
+   * Génère une facture professionnelle au format spécifique
+   */
+  genererFactureProfessionnelle(options: FactureOptions): void {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // ========== EN-TÊTE VERT ==========
+    // Fond vert pour l'en-tête (couleur verte foncée professionnelle)
+    doc.setFillColor(52, 73, 52); // Vert foncé
+    doc.rect(0, 0, pageWidth, 35, 'F');
+
+    // Texte "FACTURE N°" en blanc, centré
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FACTURE N°', pageWidth / 2, 15, { align: 'center' });
+
+    // Numéro de facture
+    doc.setFontSize(16);
+    doc.text(options.numeroFacture, pageWidth / 2, 25, { align: 'center' });
+
+    // ========== INFORMATIONS ENTREPRISE ET CLIENT ==========
+    doc.setTextColor(0, 0, 0);
+    let yPos = 45;
+
+    // Colonne gauche - Informations de l'entreprise
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Nom de l'entreprise", 14, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(options.entreprise.nom, 14, yPos + 5);
+
+    if (options.entreprise.adresse) {
+      yPos += 12;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text("Adresse", 14, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(options.entreprise.adresse, 14, yPos + 5);
+    }
+
+    const villeCP = [options.entreprise.ville, options.entreprise.codePostal].filter(Boolean).join(' ');
+    if (villeCP) {
+      yPos += 12;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text("Ville et Code Postal", 14, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(villeCP, 14, yPos + 5);
+    }
+
+    yPos += 12;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text("Numéro de téléphone", 14, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(options.entreprise.telephone, 14, yPos + 5);
+
+    if (options.entreprise.email) {
+      yPos += 12;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text("Email", 14, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(options.entreprise.email, 14, yPos + 5);
+    }
+
+    // Colonne droite - Informations du client
+    yPos = 45;
+    const colDroite = pageWidth / 2 + 10;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text("Nom du client", colDroite, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(options.client.nom, colDroite, yPos + 5);
+
+    if (options.client.adresse) {
+      yPos += 12;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text("Adresse", colDroite, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(options.client.adresse, colDroite, yPos + 5);
+    }
+
+    if (options.client.telephone) {
+      yPos += 12;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text("Numéro de téléphone", colDroite, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(options.client.telephone, colDroite, yPos + 5);
+    }
+
+    if (options.client.email) {
+      yPos += 12;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text("Email", colDroite, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(options.client.email, colDroite, yPos + 5);
+    }
+
+    // ========== DATE DE FACTURE ==========
+    // Calculer la position dynamique (minimum 100, ajusté selon le contenu)
+    yPos = Math.max(100, yPos + 20);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text(`Date de facture: ${options.dateFacture}`, 14, yPos);
+
+    // ========== TABLEAU DES PRODUITS ==========
+    yPos += 10;
+
+    const tableData = options.produits.map(p => [
+      p.designation,
+      p.quantite.toString(),
+      `${this.formatNumberFR(p.prixUnitaire)} ${options.devise}`,
+      `${this.formatNumberFR(p.total)} ${options.devise}`
+    ]);
+
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Désignation', 'Quantité', 'Prix Unitaire', 'Total']],
+      body: tableData,
+      theme: 'grid',
+      styles: {
+        fontSize: 9,
+        cellPadding: 4
+      },
+      headStyles: {
+        fillColor: [52, 73, 52], // Vert foncé
+        textColor: 255,
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { halign: 'center', cellWidth: 30 },
+        2: { halign: 'right', cellWidth: 40 },
+        3: { halign: 'right', cellWidth: 40 }
+      },
+      margin: { left: 14, right: 14 }
+    });
+
+    // ========== TOTAL GÉNÉRAL ==========
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+
+    // Encadré pour le total
+    doc.setFillColor(240, 240, 240);
+    doc.rect(pageWidth - 70, finalY, 56, 12, 'F');
+    doc.setDrawColor(0);
+    doc.rect(pageWidth - 70, finalY, 56, 12, 'S');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('TOTAL:', pageWidth - 65, finalY + 8);
+    doc.text(
+      `${this.formatNumberFR(options.totalGeneral)} ${options.devise}`,
+      pageWidth - 16,
+      finalY + 8,
+      { align: 'right' }
+    );
+
+    // ========== PIED DE PAGE ==========
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(128, 128, 128);
+      doc.text(
+        `Page ${i} sur ${pageCount}`,
+        pageWidth / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: 'center' }
+      );
+    }
+
+    // Télécharger le PDF
+    doc.save(`facture_${options.numeroFacture}.pdf`);
   }
 
   /**

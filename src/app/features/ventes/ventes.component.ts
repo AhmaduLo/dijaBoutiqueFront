@@ -15,6 +15,9 @@ import { ExportService } from '../../core/services/export.service';
 import { AuthService } from '../../core/services/auth.service';
 import { AchatService } from '../../core/services/achat.service';
 import { ProduitPourVente } from '../../core/models/produit-pour-vente.model';
+import { FactureNumeroService } from '../../core/services/facture-numero.service';
+import { TenantService } from '../../core/services/tenant.service';
+import { Tenant } from '../../core/models/tenant.model';
 
 @Component({
   selector: 'app-ventes',
@@ -97,11 +100,21 @@ import { ProduitPourVente } from '../../core/models/produit-pour-vente.model';
               <h3>👤 Informations de la vente</h3>
               <div class="form-row">
                 <div class="form-group">
-                  <label>Client</label>
+                  <label>Nom du client</label>
                   <input type="text" formControlName="client" placeholder="Ex: Farto Diallo (optionnel)" />
                   <small style="color: #666; display: block; margin-top: 0.25rem;">
                     Si vide, "Client" sera utilisé
                   </small>
+                </div>
+                <div class="form-group">
+                  <label>Numéro de téléphone</label>
+                  <input type="tel" formControlName="telephoneClient" placeholder="Ex: +221 77 123 45 67 (optionnel)" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Adresse du client</label>
+                  <input type="text" formControlName="adresseClient" placeholder="Ex: Dakar, Sénégal (optionnel)" />
                 </div>
                 <div class="form-group">
                   <label>Date de vente *</label>
@@ -296,6 +309,16 @@ export class VentesComponent implements OnInit {
   // Cache des prix de vente suggérés par produit
   private prixVenteSuggereCache: Map<string, number> = new Map();
 
+  // Données de la dernière vente pour génération de facture
+  private derniereVenteData?: {
+    client: string;
+    telephoneClient?: string;
+    adresseClient?: string;
+    dateVente: string;
+    produits: Array<{nomProduit: string; quantite: number; prixUnitaire: number; prixTotal: number}>;
+    totalGeneral: number;
+  };
+
   constructor(
     private fb: FormBuilder,
     private venteService: VenteService,
@@ -305,10 +328,14 @@ export class VentesComponent implements OnInit {
     private currencyService: CurrencyService,
     private confirmService: ConfirmService,
     private exportService: ExportService,
-    private authService: AuthService
+    private authService: AuthService,
+    private factureNumeroService: FactureNumeroService,
+    private tenantService: TenantService
   ) {
     this.venteForm = this.fb.group({
       client: [''],
+      telephoneClient: [''],
+      adresseClient: [''],
       dateVente: [new Date().toISOString().split('T')[0], Validators.required],
       produits: this.fb.array([]) // Tableau de produits
     });
@@ -570,6 +597,8 @@ export class VentesComponent implements OnInit {
     // Réinitialiser le formulaire
     this.venteForm.reset({
       client: '',
+      telephoneClient: '',
+      adresseClient: '',
       dateVente: new Date().toISOString().split('T')[0]
     });
 
@@ -611,8 +640,26 @@ export class VentesComponent implements OnInit {
     this.isSubmitting = true;
     const formValue = this.venteForm.getRawValue();
     const client = formValue['client']?.trim() || 'Client';
+    const telephoneClient = formValue['telephoneClient']?.trim();
+    const adresseClient = formValue['adresseClient']?.trim();
     const dateVente = formValue['dateVente'];
     const produits = formValue['produits'];
+
+    // Sauvegarder les données du client pour la facture
+    this.derniereVenteData = {
+      client,
+      telephoneClient,
+      adresseClient,
+      dateVente,
+      produits: produits.map((p: any) => ({
+        nomProduit: p['nomProduit'],
+        quantite: Number(p['quantite']),
+        prixUnitaire: Number(p['prixUnitaire']),
+        prixTotal: Number(p['quantite']) * Number(p['prixUnitaire'])
+      })),
+      totalGeneral: produits.reduce((sum: number, p: any) =>
+        sum + (Number(p['quantite']) * Number(p['prixUnitaire'])), 0)
+    };
 
     // Créer une vente pour chaque produit
     const ventesACreer: Vente[] = produits.map((produit: any) => ({
@@ -641,6 +688,9 @@ export class VentesComponent implements OnInit {
       this.closeForm();
       this.loadVentes();
       this.isSubmitting = false;
+
+      // Proposer la création de facture
+      this.proposerCreationFacture(ventes);
       return;
     }
 
@@ -655,6 +705,156 @@ export class VentesComponent implements OnInit {
         this.isSubmitting = false;
       }
     });
+  }
+
+  /**
+   * Propose la création d'une facture après l'enregistrement des ventes
+   */
+  private async proposerCreationFacture(ventes: Vente[]): Promise<void> {
+    const confirmed = await this.confirmService.confirm({
+      title: 'Générer une facture',
+      message: `Voulez-vous générer une facture PDF pour cette vente (${ventes.length} produit(s)) ?`,
+      confirmText: 'Générer la facture',
+      cancelText: 'Non merci',
+      type: 'info'
+    });
+
+    if (confirmed) {
+      this.genererFacturePourVentes(ventes);
+    }
+  }
+
+  /**
+   * Génère une facture PDF pour les ventes effectuées
+   */
+  private genererFacturePourVentes(ventes: Vente[]): void {
+    const currentUser = this.authService.getCurrentUser();
+
+    if (!currentUser) {
+      this.notificationService.error('Impossible de générer la facture: utilisateur non connecté');
+      return;
+    }
+
+    // Utiliser les données sauvegardées ou fallback sur les ventes
+    const donneesClient = this.derniereVenteData || {
+      client: ventes[0].client,
+      telephoneClient: undefined,
+      adresseClient: undefined,
+      dateVente: ventes[0].dateVente,
+      produits: ventes.map(v => ({
+        nomProduit: v.nomProduit,
+        quantite: v.quantite,
+        prixUnitaire: v.prixUnitaire,
+        prixTotal: v.prixTotal
+      })),
+      totalGeneral: ventes.reduce((sum, v) => sum + v.prixTotal, 0)
+    };
+
+    // Récupérer les informations de l'entreprise depuis le TenantService
+    this.tenantService.getCurrentTenant().subscribe({
+      next: (tenant: Tenant) => {
+        // Générer un numéro de facture séquentiel (FAC-001, FAC-002, etc.)
+        const numeroFacture = this.factureNumeroService.genererNumeroFacture();
+
+        // Formater la date
+        const dateFacture = new Date(donneesClient.dateVente).toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+
+        // Préparer les options de facture avec l'adresse du tenant
+        const factureOptions = {
+          numeroFacture: numeroFacture,
+          dateFacture: dateFacture,
+          entreprise: {
+            nom: tenant.nomEntreprise || currentUser.nomEntreprise || 'HeasyStock',
+            adresse: tenant.adresse, // ✅ Adresse récupérée depuis le tenant
+            ville: undefined,
+            codePostal: undefined,
+            telephone: tenant.numeroTelephone || currentUser.numeroTelephone || 'N/A',
+            email: currentUser.email
+          },
+          client: {
+            nom: donneesClient.client,
+            entreprise: donneesClient.client,
+            adresse: donneesClient.adresseClient,
+            telephone: donneesClient.telephoneClient,
+            email: undefined
+          },
+          produits: donneesClient.produits.map(p => ({
+            designation: p.nomProduit,
+            quantite: p.quantite,
+            prixUnitaire: p.prixUnitaire,
+            total: p.prixTotal
+          })),
+          totalGeneral: donneesClient.totalGeneral,
+          devise: this.selectedCurrency?.symbole || 'CFA'
+        };
+
+        try {
+          this.exportService.genererFactureProfessionnelle(factureOptions);
+          this.notificationService.success('Facture générée avec succès');
+        } catch (error: any) {
+          this.notificationService.error(`Erreur lors de la génération de la facture: ${error.message}`);
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors de la récupération du tenant:', error);
+        // En cas d'erreur, générer quand même la facture sans l'adresse
+        this.genererFactureSansTenant(ventes, donneesClient);
+      }
+    });
+  }
+
+  /**
+   * Génère une facture sans récupérer le tenant (fallback)
+   */
+  private genererFactureSansTenant(ventes: Vente[], donneesClient: any): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) return;
+
+    const numeroFacture = this.factureNumeroService.genererNumeroFacture();
+    const dateFacture = new Date(donneesClient.dateVente).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+
+    const factureOptions = {
+      numeroFacture: numeroFacture,
+      dateFacture: dateFacture,
+      entreprise: {
+        nom: currentUser.nomEntreprise || 'HeasyStock',
+        adresse: undefined,
+        ville: undefined,
+        codePostal: undefined,
+        telephone: currentUser.numeroTelephone || 'N/A',
+        email: currentUser.email
+      },
+      client: {
+        nom: donneesClient.client,
+        entreprise: donneesClient.client,
+        adresse: donneesClient.adresseClient,
+        telephone: donneesClient.telephoneClient,
+        email: undefined
+      },
+      produits: donneesClient.produits.map((p: any) => ({
+        designation: p.nomProduit,
+        quantite: p.quantite,
+        prixUnitaire: p.prixUnitaire,
+        total: p.prixTotal
+      })),
+      totalGeneral: donneesClient.totalGeneral,
+      devise: this.selectedCurrency?.symbole || 'CFA'
+    };
+
+    try {
+      this.exportService.genererFactureProfessionnelle(factureOptions);
+      this.notificationService.success('Facture générée avec succès');
+    } catch (error: any) {
+      this.notificationService.error(`Erreur lors de la génération de la facture: ${error.message}`);
+    }
   }
 
   editVente(vente: Vente): void {

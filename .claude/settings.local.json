@@ -14,7 +14,8 @@
       "Bash(cmd /c \"taskkill /PID 41668 /F\")",
       "Bash(git rm:*)",
       "Bash(npx ng build:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(powershell -Command:*)"
     ],
     "deny": [],
     "ask": []

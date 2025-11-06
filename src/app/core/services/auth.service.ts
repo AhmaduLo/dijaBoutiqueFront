@@ -123,16 +123,26 @@ export class AuthService {
   }
 
   /**
-   * Recharge les informations de l'utilisateur actuel
+   * Recharge les informations de l'utilisateur actuel depuis le backend
    * Utile après modification de l'entreprise pour mettre à jour le header
    */
-  refreshCurrentUser(): void {
-    const user = this.getUserFromStorage();
-    if (user) {
-      // Faire un appel API pour récupérer les infos à jour
-      // Pour l'instant, on force juste un reload depuis le storage
-      this.currentUserSubject.next({...user});
-    }
+  refreshCurrentUser(): Observable<User> {
+    return this.http.get<User>(`${this.API_URL}/me`).pipe(
+      tap(user => {
+        // Mettre à jour le localStorage et le BehaviorSubject
+        localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+        this.currentUserSubject.next(user);
+      })
+    );
+  }
+
+  /**
+   * Met à jour manuellement l'utilisateur dans le storage
+   * Utile si les infos ont été modifiées ailleurs
+   */
+  updateCurrentUser(user: User): void {
+    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    this.currentUserSubject.next(user);
   }
 
   /**

@@ -7,6 +7,7 @@ export interface User {
   prenom: string;
   email: string;
   nomEntreprise?: string;
+  adresseEntreprise?: string;
   numeroTelephone?: string;
   role?: string;
   createdAt?: string;
