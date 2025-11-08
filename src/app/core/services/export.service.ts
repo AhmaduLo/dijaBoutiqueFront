@@ -182,10 +182,10 @@ export class ExportService {
 
     let yPosition = 15;
 
-    // En-tête avec informations de l'entreprise (style moderne avec fond bleu)
+    // En-tête avec informations de l'entreprise (style moderne avec fond vert)
     if (companyInfo) {
-      // Fond bleu-gris foncé pour l'en-tête (couleur similaire à l'image: #4a5f6d)
-      doc.setFillColor(74, 95, 109);
+      // Fond vert foncé professionnel pour l'en-tête (même couleur que les factures: #344934)
+      doc.setFillColor(52, 73, 52);
       doc.rect(0, 0, 210, 45, 'F');
 
       // Forme diagonale blanche en bas à droite (effet moderne)
@@ -197,25 +197,27 @@ export class ExportService {
         { x: 210, y: 45 }   // Point bas droit
       ];
       doc.triangle(trianglePoints[0].x, trianglePoints[0].y,
-                   trianglePoints[1].x, trianglePoints[1].y,
-                   trianglePoints[2].x, trianglePoints[2].y, 'F');
+        trianglePoints[1].x, trianglePoints[1].y,
+        trianglePoints[2].x, trianglePoints[2].y, 'F');
 
-      // Nom de l'entreprise (blanc, grand et gras) - Gauche
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(22);
+      // Logo "HeasyStock" en haut à gauche (couleur dorée/jaune clair)
+      doc.setTextColor(255, 215, 0); // Doré (gold) en RGB - très visible sur fond vert
+      doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.text(companyInfo.nom, 14, 20);
+      doc.text('HeasyStock', 14, 15);
+
+      // Nom de l'entreprise (blanc, grand et gras) - Centre gauche
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(28);
+      doc.setFont('helvetica', 'bold');
+      doc.text(companyInfo.nom.toUpperCase(), 14, 34);
 
       // Informations de contact (blanc, plus petites, alignées à droite)
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       const pageWidth = doc.internal.pageSize.getWidth();
 
-      let contactYPos = 18;
-
-      // Numéro de téléphone
-      doc.text(`Numéro : ${companyInfo.telephone}`, pageWidth - 14, contactYPos, { align: 'right' });
-      contactYPos += 5;
+      let contactYPos = 12;
 
       // Adresse si disponible
       if (companyInfo.adresse) {
@@ -223,8 +225,20 @@ export class ExportService {
         contactYPos += 5;
       }
 
-      // Propriétaire
-      doc.text(`Propriétaire : ${companyInfo.proprietaire}`, pageWidth - 14, contactYPos, { align: 'right' });
+      // Numéro de téléphone
+      doc.text(`Numero de telephone : ${companyInfo.telephone}`, pageWidth - 14, contactYPos, { align: 'right' });
+      contactYPos += 5;
+
+      // Email si disponible
+      if (companyInfo.email) {
+        doc.text(`Email : ${companyInfo.email}`, pageWidth - 14, contactYPos, { align: 'right' });
+        contactYPos += 5;
+      }
+
+      // Propriétaire si disponible
+      if (companyInfo.proprietaire) {
+        doc.text(`Proprietaire : ${companyInfo.proprietaire}`, pageWidth - 14, contactYPos, { align: 'right' });
+      }
 
       // Réinitialiser la couleur du texte pour le reste du document
       doc.setTextColor(0, 0, 0);

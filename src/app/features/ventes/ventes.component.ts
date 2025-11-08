@@ -1038,55 +1038,120 @@ export class VentesComponent implements OnInit {
       return;
     }
 
-    // Créer le nom de fichier avec les dates si applicable
-    let filename = 'ventes';
-    if (this.exportDateDebut && this.exportDateFin) {
-      filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
-    } else if (this.exportDateDebut) {
-      filename += `_depuis_${this.exportDateDebut}`;
-    } else if (this.exportDateFin) {
-      filename += `_jusqu_au_${this.exportDateFin}`;
-    } else {
-      filename += `_${new Date().toISOString().split('T')[0]}`;
-    }
+    // Récupérer les informations de l'entreprise
+    this.tenantService.getTenantInfo().subscribe({
+      next: (tenant: Tenant) => {
+        const currentUser = this.authService.getCurrentUser();
 
-    const columns = [
-      { header: 'Date', field: 'dateVente', format: (val: string) => this.formatDate(val) },
-      { header: 'Produit', field: 'nomProduit' },
-      { header: 'Client', field: 'client' },
-      { header: 'Quantité', field: 'quantite' },
-      {
-        header: `Prix Unitaire (${this.selectedCurrency?.symbole || 'CFA'})`,
-        field: 'prixUnitaire',
-        format: (val: number) => val.toFixed(2)
+        // Créer le nom de fichier avec les dates si applicable
+        let filename = 'ventes';
+        if (this.exportDateDebut && this.exportDateFin) {
+          filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+        } else if (this.exportDateDebut) {
+          filename += `_depuis_${this.exportDateDebut}`;
+        } else if (this.exportDateFin) {
+          filename += `_jusqu_au_${this.exportDateFin}`;
+        } else {
+          filename += `_${new Date().toISOString().split('T')[0]}`;
+        }
+
+        const columns = [
+          { header: 'Date', field: 'dateVente', format: (val: string) => this.formatDate(val) },
+          { header: 'Produit', field: 'nomProduit' },
+          { header: 'Client', field: 'client' },
+          { header: 'Quantité', field: 'quantite' },
+          {
+            header: `Prix Unitaire (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixUnitaire',
+            format: (val: number) => val.toFixed(2)
+          },
+          {
+            header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixTotal',
+            format: (val: number) => val.toFixed(2)
+          }
+        ];
+
+        const exportOptions = {
+          filename,
+          title: 'Liste des Ventes',
+          columns,
+          data: dataToExport,
+          dateRange: {
+            dateDebut: this.exportDateDebut,
+            dateFin: this.exportDateFin
+          },
+          companyInfo: {
+            nom: tenant.nomEntreprise || currentUser?.nomEntreprise || 'HeasyStock',
+            proprietaire: tenant.prenomProprietaire && tenant.nomProprietaire
+              ? `${tenant.prenomProprietaire} ${tenant.nomProprietaire}`
+              : '',
+            telephone: tenant.numeroTelephone || currentUser?.numeroTelephone || 'N/A',
+            adresse: tenant.adresse || '',
+            email: tenant.emailProprietaire || currentUser?.email || ''
+          }
+        };
+
+        this.exportService.exportToExcel(exportOptions);
+        this.notificationService.success(`${dataToExport.length} vente(s) exportée(s) avec succès en Excel`);
+        this.closeExportModal();
       },
-      {
-        header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
-        field: 'prixTotal',
-        format: (val: number) => val.toFixed(2)
-      }
-    ];
+      error: (error) => {
+        console.error('Erreur lors de la récupération du tenant:', error);
+        // En cas d'erreur, exporter quand même sans les infos de l'entreprise
+        const currentUser = this.authService.getCurrentUser();
 
-    const exportOptions = {
-      filename,
-      title: 'Liste des Ventes',
-      columns,
-      data: dataToExport,
-      dateRange: {
-        dateDebut: this.exportDateDebut,
-        dateFin: this.exportDateFin
-      },
-      companyInfo: {
-        nom: 'HeasyStock',
-        proprietaire: '',
-        telephone: '+221 XX XXX XX XX',
-        adresse: 'Dakar, Sénégal'
-      }
-    };
+        let filename = 'ventes';
+        if (this.exportDateDebut && this.exportDateFin) {
+          filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+        } else if (this.exportDateDebut) {
+          filename += `_depuis_${this.exportDateDebut}`;
+        } else if (this.exportDateFin) {
+          filename += `_jusqu_au_${this.exportDateFin}`;
+        } else {
+          filename += `_${new Date().toISOString().split('T')[0]}`;
+        }
 
-    this.exportService.exportToExcel(exportOptions);
-    this.notificationService.success(`${dataToExport.length} vente(s) exportée(s) avec succès en Excel`);
-    this.closeExportModal();
+        const columns = [
+          { header: 'Date', field: 'dateVente', format: (val: string) => this.formatDate(val) },
+          { header: 'Produit', field: 'nomProduit' },
+          { header: 'Client', field: 'client' },
+          { header: 'Quantité', field: 'quantite' },
+          {
+            header: `Prix Unitaire (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixUnitaire',
+            format: (val: number) => val.toFixed(2)
+          },
+          {
+            header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixTotal',
+            format: (val: number) => val.toFixed(2)
+          }
+        ];
+
+        const exportOptions = {
+          filename,
+          title: 'Liste des Ventes',
+          columns,
+          data: dataToExport,
+          dateRange: {
+            dateDebut: this.exportDateDebut,
+            dateFin: this.exportDateFin
+          },
+          companyInfo: {
+            nom: currentUser?.nomEntreprise || 'HeasyStock',
+            proprietaire: '',
+            telephone: currentUser?.numeroTelephone || 'N/A',
+            adresse: '',
+            email: currentUser?.email || ''
+          }
+        };
+
+        this.exportService.exportToExcel(exportOptions);
+        this.notificationService.success(`${dataToExport.length} vente(s) exportée(s) avec succès en Excel`);
+        this.closeExportModal();
+      }
+    });
   }
 
   /**
@@ -1119,55 +1184,120 @@ export class VentesComponent implements OnInit {
       return;
     }
 
-    // Créer le nom de fichier avec les dates si applicable
-    let filename = 'ventes';
-    if (this.exportDateDebut && this.exportDateFin) {
-      filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
-    } else if (this.exportDateDebut) {
-      filename += `_depuis_${this.exportDateDebut}`;
-    } else if (this.exportDateFin) {
-      filename += `_jusqu_au_${this.exportDateFin}`;
-    } else {
-      filename += `_${new Date().toISOString().split('T')[0]}`;
-    }
+    // Récupérer les informations de l'entreprise
+    this.tenantService.getTenantInfo().subscribe({
+      next: (tenant: Tenant) => {
+        const currentUser = this.authService.getCurrentUser();
 
-    const columns = [
-      { header: 'Date', field: 'dateVente', format: (val: string) => this.formatDate(val) },
-      { header: 'Produit', field: 'nomProduit' },
-      { header: 'Client', field: 'client' },
-      { header: 'Quantité', field: 'quantite' },
-      {
-        header: `Prix Unit. (${this.selectedCurrency?.symbole || 'CFA'})`,
-        field: 'prixUnitaire',
-        format: (val: number) => val.toFixed(2)
+        // Créer le nom de fichier avec les dates si applicable
+        let filename = 'ventes';
+        if (this.exportDateDebut && this.exportDateFin) {
+          filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+        } else if (this.exportDateDebut) {
+          filename += `_depuis_${this.exportDateDebut}`;
+        } else if (this.exportDateFin) {
+          filename += `_jusqu_au_${this.exportDateFin}`;
+        } else {
+          filename += `_${new Date().toISOString().split('T')[0]}`;
+        }
+
+        const columns = [
+          { header: 'Date', field: 'dateVente', format: (val: string) => this.formatDate(val) },
+          { header: 'Produit', field: 'nomProduit' },
+          { header: 'Client', field: 'client' },
+          { header: 'Quantité', field: 'quantite' },
+          {
+            header: `Prix Unit. (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixUnitaire',
+            format: (val: number) => val.toFixed(2)
+          },
+          {
+            header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixTotal',
+            format: (val: number) => val.toFixed(2)
+          }
+        ];
+
+        const exportOptions = {
+          filename,
+          title: 'Liste des Ventes',
+          columns,
+          data: dataToExport,
+          dateRange: {
+            dateDebut: this.exportDateDebut,
+            dateFin: this.exportDateFin
+          },
+          companyInfo: {
+            nom: tenant.nomEntreprise || currentUser?.nomEntreprise || 'HeasyStock',
+            proprietaire: tenant.prenomProprietaire && tenant.nomProprietaire
+              ? `${tenant.prenomProprietaire} ${tenant.nomProprietaire}`
+              : '',
+            telephone: tenant.numeroTelephone || currentUser?.numeroTelephone || 'N/A',
+            adresse: tenant.adresse || '',
+            email: tenant.emailProprietaire || currentUser?.email || ''
+          }
+        };
+
+        this.exportService.exportToPDF(exportOptions);
+        this.notificationService.success(`${dataToExport.length} vente(s) exportée(s) avec succès en PDF`);
+        this.closeExportModal();
       },
-      {
-        header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
-        field: 'prixTotal',
-        format: (val: number) => val.toFixed(2)
-      }
-    ];
+      error: (error) => {
+        console.error('Erreur lors de la récupération du tenant:', error);
+        // En cas d'erreur, exporter quand même sans les infos de l'entreprise
+        const currentUser = this.authService.getCurrentUser();
 
-    const exportOptions = {
-      filename,
-      title: 'Liste des Ventes',
-      columns,
-      data: dataToExport,
-      dateRange: {
-        dateDebut: this.exportDateDebut,
-        dateFin: this.exportDateFin
-      },
-      companyInfo: {
-        nom: 'HeasyStock',
-        proprietaire: '',
-        telephone: '+221 XX XXX XX XX',
-        adresse: 'Dakar, Sénégal'
-      }
-    };
+        let filename = 'ventes';
+        if (this.exportDateDebut && this.exportDateFin) {
+          filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+        } else if (this.exportDateDebut) {
+          filename += `_depuis_${this.exportDateDebut}`;
+        } else if (this.exportDateFin) {
+          filename += `_jusqu_au_${this.exportDateFin}`;
+        } else {
+          filename += `_${new Date().toISOString().split('T')[0]}`;
+        }
 
-    this.exportService.exportToPDF(exportOptions);
-    this.notificationService.success(`${dataToExport.length} vente(s) exportée(s) avec succès en PDF`);
-    this.closeExportModal();
+        const columns = [
+          { header: 'Date', field: 'dateVente', format: (val: string) => this.formatDate(val) },
+          { header: 'Produit', field: 'nomProduit' },
+          { header: 'Client', field: 'client' },
+          { header: 'Quantité', field: 'quantite' },
+          {
+            header: `Prix Unit. (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixUnitaire',
+            format: (val: number) => val.toFixed(2)
+          },
+          {
+            header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixTotal',
+            format: (val: number) => val.toFixed(2)
+          }
+        ];
+
+        const exportOptions = {
+          filename,
+          title: 'Liste des Ventes',
+          columns,
+          data: dataToExport,
+          dateRange: {
+            dateDebut: this.exportDateDebut,
+            dateFin: this.exportDateFin
+          },
+          companyInfo: {
+            nom: currentUser?.nomEntreprise || 'HeasyStock',
+            proprietaire: '',
+            telephone: currentUser?.numeroTelephone || 'N/A',
+            adresse: '',
+            email: currentUser?.email || ''
+          }
+        };
+
+        this.exportService.exportToPDF(exportOptions);
+        this.notificationService.success(`${dataToExport.length} vente(s) exportée(s) avec succès en PDF`);
+        this.closeExportModal();
+      }
+    });
   }
 
   /**
