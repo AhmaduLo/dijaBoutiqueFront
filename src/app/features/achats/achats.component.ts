@@ -12,6 +12,9 @@ import { CurrencyService } from '../../core/services/currency.service';
 import { Currency } from '../../core/models/currency.model';
 import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
 import { ExportService } from '../../core/services/export.service';
+import { TenantService } from '../../core/services/tenant.service';
+import { AuthService } from '../../core/services/auth.service';
+import { Tenant } from '../../core/models/tenant.model';
 
 /**
  * Composant de gestion des achats de stock
@@ -300,7 +303,9 @@ export class AchatsComponent implements OnInit {
     private currencyService: CurrencyService,
     private notificationService: NotificationService,
     private confirmService: ConfirmService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private tenantService: TenantService,
+    private authService: AuthService
   ) {
     this.achatForm = this.fb.group({
       nomProduit: ['', Validators.required],
@@ -608,59 +613,122 @@ export class AchatsComponent implements OnInit {
       return;
     }
 
-    // Préparer les colonnes d'export
-    const columns = [
-      { header: 'Date', field: 'dateAchat', format: (val: string) => this.formatDate(val) },
-      { header: 'Produit', field: 'nomProduit' },
-      { header: 'Fournisseur', field: 'fournisseur' },
-      { header: 'Quantité', field: 'quantite' },
-      {
-        header: `Prix Unitaire (${this.selectedCurrency?.symbole || 'CFA'})`,
-        field: 'prixUnitaire',
-        format: (val: number) => val.toFixed(2)
+    // Récupérer les informations de l'entreprise
+    this.tenantService.getTenantInfo().subscribe({
+      next: (tenant: Tenant) => {
+        const currentUser = this.authService.getCurrentUser();
+
+        // Préparer les colonnes d'export
+        const columns = [
+          { header: 'Date', field: 'dateAchat', format: (val: string) => this.formatDate(val) },
+          { header: 'Produit', field: 'nomProduit' },
+          { header: 'Fournisseur', field: 'fournisseur' },
+          { header: 'Quantité', field: 'quantite' },
+          {
+            header: `Prix Unitaire (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixUnitaire',
+            format: (val: number) => val.toFixed(2)
+          },
+          {
+            header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixTotal',
+            format: (val: number) => val.toFixed(2)
+          }
+        ];
+
+        // Créer le nom de fichier avec les dates si applicable
+        let filename = 'achats';
+        if (this.exportDateDebut && this.exportDateFin) {
+          filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+        } else if (this.exportDateDebut) {
+          filename += `_depuis_${this.exportDateDebut}`;
+        } else if (this.exportDateFin) {
+          filename += `_jusqu_au_${this.exportDateFin}`;
+        } else {
+          filename += `_${new Date().toISOString().split('T')[0]}`;
+        }
+
+        // Options d'export
+        const exportOptions = {
+          filename,
+          title: 'Liste des Achats',
+          columns,
+          data: dataToExport,
+          dateRange: {
+            dateDebut: this.exportDateDebut,
+            dateFin: this.exportDateFin
+          },
+          companyInfo: {
+            nom: tenant.nomEntreprise || currentUser?.nomEntreprise || 'HeasyStock',
+            proprietaire: tenant.prenomProprietaire && tenant.nomProprietaire
+              ? `${tenant.prenomProprietaire} ${tenant.nomProprietaire}`
+              : '',
+            telephone: tenant.numeroTelephone || currentUser?.numeroTelephone || 'N/A',
+            adresse: tenant.adresse || '',
+            email: tenant.emailProprietaire || currentUser?.email || ''
+          }
+        };
+
+        this.exportService.exportToExcel(exportOptions);
+        this.notificationService.success(`${dataToExport.length} achat(s) exporté(s) avec succès en Excel`);
+        this.closeExportModal();
       },
-      {
-        header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
-        field: 'prixTotal',
-        format: (val: number) => val.toFixed(2)
+      error: (error) => {
+        console.error('Erreur lors de la récupération du tenant:', error);
+        // En cas d'erreur, exporter quand même sans les infos de l'entreprise
+        const currentUser = this.authService.getCurrentUser();
+
+        const columns = [
+          { header: 'Date', field: 'dateAchat', format: (val: string) => this.formatDate(val) },
+          { header: 'Produit', field: 'nomProduit' },
+          { header: 'Fournisseur', field: 'fournisseur' },
+          { header: 'Quantité', field: 'quantite' },
+          {
+            header: `Prix Unitaire (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixUnitaire',
+            format: (val: number) => val.toFixed(2)
+          },
+          {
+            header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixTotal',
+            format: (val: number) => val.toFixed(2)
+          }
+        ];
+
+        let filename = 'achats';
+        if (this.exportDateDebut && this.exportDateFin) {
+          filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+        } else if (this.exportDateDebut) {
+          filename += `_depuis_${this.exportDateDebut}`;
+        } else if (this.exportDateFin) {
+          filename += `_jusqu_au_${this.exportDateFin}`;
+        } else {
+          filename += `_${new Date().toISOString().split('T')[0]}`;
+        }
+
+        const exportOptions = {
+          filename,
+          title: 'Liste des Achats',
+          columns,
+          data: dataToExport,
+          dateRange: {
+            dateDebut: this.exportDateDebut,
+            dateFin: this.exportDateFin
+          },
+          companyInfo: {
+            nom: currentUser?.nomEntreprise || 'HeasyStock',
+            proprietaire: '',
+            telephone: currentUser?.numeroTelephone || 'N/A',
+            adresse: '',
+            email: currentUser?.email || ''
+          }
+        };
+
+        this.exportService.exportToExcel(exportOptions);
+        this.notificationService.success(`${dataToExport.length} achat(s) exporté(s) avec succès en Excel`);
+        this.closeExportModal();
       }
-    ];
-
-    // Créer le nom de fichier avec les dates si applicable
-    let filename = 'achats';
-    if (this.exportDateDebut && this.exportDateFin) {
-      filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
-    } else if (this.exportDateDebut) {
-      filename += `_depuis_${this.exportDateDebut}`;
-    } else if (this.exportDateFin) {
-      filename += `_jusqu_au_${this.exportDateFin}`;
-    } else {
-      filename += `_${new Date().toISOString().split('T')[0]}`;
-    }
-
-    // Options d'export
-    const exportOptions = {
-      filename,
-      title: 'Liste des Achats',
-      columns,
-      data: dataToExport,
-      dateRange: {
-        dateDebut: this.exportDateDebut,
-        dateFin: this.exportDateFin
-      },
-      companyInfo: {
-        nom: 'HeasyStock',
-        proprietaire: '',
-        telephone: '+221 XX XXX XX XX',
-        adresse: 'Dakar, Sénégal'
-      }
-    };
-
-    this.exportService.exportToExcel(exportOptions);
-    this.notificationService.success(`${dataToExport.length} achat(s) exporté(s) avec succès en Excel`);
-
-    // Fermer le modal
-    this.closeExportModal();
+    });
   }
 
   /**
@@ -693,58 +761,121 @@ export class AchatsComponent implements OnInit {
       return;
     }
 
-    // Préparer les colonnes d'export
-    const columns = [
-      { header: 'Date', field: 'dateAchat', format: (val: string) => this.formatDate(val) },
-      { header: 'Produit', field: 'nomProduit' },
-      { header: 'Fournisseur', field: 'fournisseur' },
-      { header: 'Quantité', field: 'quantite' },
-      {
-        header: `Prix Unit. (${this.selectedCurrency?.symbole || 'CFA'})`,
-        field: 'prixUnitaire',
-        format: (val: number) => val.toFixed(2)
+    // Récupérer les informations de l'entreprise
+    this.tenantService.getTenantInfo().subscribe({
+      next: (tenant: Tenant) => {
+        const currentUser = this.authService.getCurrentUser();
+
+        // Préparer les colonnes d'export
+        const columns = [
+          { header: 'Date', field: 'dateAchat', format: (val: string) => this.formatDate(val) },
+          { header: 'Produit', field: 'nomProduit' },
+          { header: 'Fournisseur', field: 'fournisseur' },
+          { header: 'Quantité', field: 'quantite' },
+          {
+            header: `Prix Unit. (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixUnitaire',
+            format: (val: number) => val.toFixed(2)
+          },
+          {
+            header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixTotal',
+            format: (val: number) => val.toFixed(2)
+          }
+        ];
+
+        // Créer le nom de fichier avec les dates si applicable
+        let filename = 'achats';
+        if (this.exportDateDebut && this.exportDateFin) {
+          filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+        } else if (this.exportDateDebut) {
+          filename += `_depuis_${this.exportDateDebut}`;
+        } else if (this.exportDateFin) {
+          filename += `_jusqu_au_${this.exportDateFin}`;
+        } else {
+          filename += `_${new Date().toISOString().split('T')[0]}`;
+        }
+
+        // Options d'export
+        const exportOptions = {
+          filename,
+          title: 'Liste des Achats',
+          columns,
+          data: dataToExport,
+          dateRange: {
+            dateDebut: this.exportDateDebut,
+            dateFin: this.exportDateFin
+          },
+          companyInfo: {
+            nom: tenant.nomEntreprise || currentUser?.nomEntreprise || 'HeasyStock',
+            proprietaire: tenant.prenomProprietaire && tenant.nomProprietaire
+              ? `${tenant.prenomProprietaire} ${tenant.nomProprietaire}`
+              : '',
+            telephone: tenant.numeroTelephone || currentUser?.numeroTelephone || 'N/A',
+            adresse: tenant.adresse || '',
+            email: tenant.emailProprietaire || currentUser?.email || ''
+          }
+        };
+
+        this.exportService.exportToPDF(exportOptions);
+        this.notificationService.success(`${dataToExport.length} achat(s) exporté(s) avec succès en PDF`);
+        this.closeExportModal();
       },
-      {
-        header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
-        field: 'prixTotal',
-        format: (val: number) => val.toFixed(2)
+      error: (error) => {
+        console.error('Erreur lors de la récupération du tenant:', error);
+        // En cas d'erreur, exporter quand même sans les infos de l'entreprise
+        const currentUser = this.authService.getCurrentUser();
+
+        const columns = [
+          { header: 'Date', field: 'dateAchat', format: (val: string) => this.formatDate(val) },
+          { header: 'Produit', field: 'nomProduit' },
+          { header: 'Fournisseur', field: 'fournisseur' },
+          { header: 'Quantité', field: 'quantite' },
+          {
+            header: `Prix Unit. (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixUnitaire',
+            format: (val: number) => val.toFixed(2)
+          },
+          {
+            header: `Prix Total (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'prixTotal',
+            format: (val: number) => val.toFixed(2)
+          }
+        ];
+
+        let filename = 'achats';
+        if (this.exportDateDebut && this.exportDateFin) {
+          filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+        } else if (this.exportDateDebut) {
+          filename += `_depuis_${this.exportDateDebut}`;
+        } else if (this.exportDateFin) {
+          filename += `_jusqu_au_${this.exportDateFin}`;
+        } else {
+          filename += `_${new Date().toISOString().split('T')[0]}`;
+        }
+
+        const exportOptions = {
+          filename,
+          title: 'Liste des Achats',
+          columns,
+          data: dataToExport,
+          dateRange: {
+            dateDebut: this.exportDateDebut,
+            dateFin: this.exportDateFin
+          },
+          companyInfo: {
+            nom: currentUser?.nomEntreprise || 'HeasyStock',
+            proprietaire: '',
+            telephone: currentUser?.numeroTelephone || 'N/A',
+            adresse: '',
+            email: currentUser?.email || ''
+          }
+        };
+
+        this.exportService.exportToPDF(exportOptions);
+        this.notificationService.success(`${dataToExport.length} achat(s) exporté(s) avec succès en PDF`);
+        this.closeExportModal();
       }
-    ];
-
-    // Créer le nom de fichier avec les dates si applicable
-    let filename = 'achats';
-    if (this.exportDateDebut && this.exportDateFin) {
-      filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
-    } else if (this.exportDateDebut) {
-      filename += `_depuis_${this.exportDateDebut}`;
-    } else if (this.exportDateFin) {
-      filename += `_jusqu_au_${this.exportDateFin}`;
-    } else {
-      filename += `_${new Date().toISOString().split('T')[0]}`;
-    }
-
-    // Options d'export
-    const exportOptions = {
-      filename,
-      title: 'Liste des Achats',
-      columns,
-      data: dataToExport,
-      dateRange: {
-        dateDebut: this.exportDateDebut,
-        dateFin: this.exportDateFin
-      },
-      companyInfo: {
-        nom: 'HeasyStock',
-        proprietaire: '',
-        telephone: '+221 XX XXX XX XX',
-        adresse: 'Dakar, Sénégal'
-      }
-    };
-
-    this.exportService.exportToPDF(exportOptions);
-    this.notificationService.success(`${dataToExport.length} achat(s) exporté(s) avec succès en PDF`);
-
-    // Fermer le modal
-    this.closeExportModal();
+    });
   }
 }

@@ -10,6 +10,9 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
 import { CurrencyService } from '../../core/services/currency.service';
 import { Currency } from '../../core/models/currency.model';
 import { ExportService } from '../../core/services/export.service';
+import { TenantService } from '../../core/services/tenant.service';
+import { AuthService } from '../../core/services/auth.service';
+import { Tenant } from '../../core/models/tenant.model';
 
 @Component({
   selector: 'app-depenses',
@@ -229,7 +232,9 @@ export class DepensesComponent implements OnInit {
     private notificationService: NotificationService,
     private currencyService: CurrencyService,
     private confirmService: ConfirmService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private tenantService: TenantService,
+    private authService: AuthService
   ) {
     this.categories = this.depenseService.getCategories();
     this.depenseForm = this.fb.group({
@@ -447,50 +452,110 @@ export class DepensesComponent implements OnInit {
       return;
     }
 
-    // Créer le nom de fichier avec les dates si applicable
-    let filename = 'depenses';
-    if (this.exportDateDebut && this.exportDateFin) {
-      filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
-    } else if (this.exportDateDebut) {
-      filename += `_depuis_${this.exportDateDebut}`;
-    } else if (this.exportDateFin) {
-      filename += `_jusqu_au_${this.exportDateFin}`;
-    } else {
-      filename += `_${new Date().toISOString().split('T')[0]}`;
-    }
+    // Récupérer les informations de l'entreprise
+    this.tenantService.getTenantInfo().subscribe({
+      next: (tenant: Tenant) => {
+        const currentUser = this.authService.getCurrentUser();
 
-    const columns = [
-      { header: 'Date', field: 'dateDepense', format: (val: string) => this.formatDate(val) },
-      { header: 'Libellé', field: 'libelle' },
-      { header: 'Catégorie', field: 'categorie', format: (val: CategorieDepense) => this.getCategorieLabel(val) },
-      {
-        header: `Montant (${this.selectedCurrency?.symbole || 'CFA'})`,
-        field: 'montant',
-        format: (val: number) => val.toFixed(2)
-      },
-      { header: 'Description', field: 'description' }
-    ];
+        // Créer le nom de fichier avec les dates si applicable
+        let filename = 'depenses';
+        if (this.exportDateDebut && this.exportDateFin) {
+          filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+        } else if (this.exportDateDebut) {
+          filename += `_depuis_${this.exportDateDebut}`;
+        } else if (this.exportDateFin) {
+          filename += `_jusqu_au_${this.exportDateFin}`;
+        } else {
+          filename += `_${new Date().toISOString().split('T')[0]}`;
+        }
 
-    const exportOptions = {
-      filename,
-      title: 'Liste des Dépenses',
-      columns,
-      data: dataToExport,
-      dateRange: {
-        dateDebut: this.exportDateDebut,
-        dateFin: this.exportDateFin
+        const columns = [
+          { header: 'Date', field: 'dateDepense', format: (val: string) => this.formatDate(val) },
+          { header: 'Libellé', field: 'libelle' },
+          { header: 'Catégorie', field: 'categorie', format: (val: CategorieDepense) => this.getCategorieLabel(val) },
+          {
+            header: `Montant (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'montant',
+            format: (val: number) => val.toFixed(2)
+          },
+          { header: 'Description', field: 'description' }
+        ];
+
+        const exportOptions = {
+          filename,
+          title: 'Liste des Dépenses',
+          columns,
+          data: dataToExport,
+          dateRange: {
+            dateDebut: this.exportDateDebut,
+            dateFin: this.exportDateFin
+          },
+          companyInfo: {
+            nom: tenant.nomEntreprise || currentUser?.nomEntreprise || 'HeasyStock',
+            proprietaire: tenant.prenomProprietaire && tenant.nomProprietaire
+              ? `${tenant.prenomProprietaire} ${tenant.nomProprietaire}`
+              : '',
+            telephone: tenant.numeroTelephone || currentUser?.numeroTelephone || 'N/A',
+            adresse: tenant.adresse || '',
+            email: tenant.emailProprietaire || currentUser?.email || ''
+          }
+        };
+
+        this.exportService.exportToExcel(exportOptions);
+        this.notificationService.success(`${dataToExport.length} dépense(s) exportée(s) avec succès en Excel`);
+        this.closeExportModal();
       },
-      companyInfo: {
-        nom: 'HeasyStock',
-        proprietaire: '',
-        telephone: '+221 XX XXX XX XX',
-        adresse: 'Dakar, Sénégal'
+      error: (error) => {
+        console.error('Erreur lors de la récupération du tenant:', error);
+        // En cas d'erreur, exporter quand même sans les infos de l'entreprise
+        const currentUser = this.authService.getCurrentUser();
+
+        let filename = 'depenses';
+        if (this.exportDateDebut && this.exportDateFin) {
+          filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+        } else if (this.exportDateDebut) {
+          filename += `_depuis_${this.exportDateDebut}`;
+        } else if (this.exportDateFin) {
+          filename += `_jusqu_au_${this.exportDateFin}`;
+        } else {
+          filename += `_${new Date().toISOString().split('T')[0]}`;
+        }
+
+        const columns = [
+          { header: 'Date', field: 'dateDepense', format: (val: string) => this.formatDate(val) },
+          { header: 'Libellé', field: 'libelle' },
+          { header: 'Catégorie', field: 'categorie', format: (val: CategorieDepense) => this.getCategorieLabel(val) },
+          {
+            header: `Montant (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'montant',
+            format: (val: number) => val.toFixed(2)
+          },
+          { header: 'Description', field: 'description' }
+        ];
+
+        const exportOptions = {
+          filename,
+          title: 'Liste des Dépenses',
+          columns,
+          data: dataToExport,
+          dateRange: {
+            dateDebut: this.exportDateDebut,
+            dateFin: this.exportDateFin
+          },
+          companyInfo: {
+            nom: currentUser?.nomEntreprise || 'HeasyStock',
+            proprietaire: '',
+            telephone: currentUser?.numeroTelephone || 'N/A',
+            adresse: '',
+            email: currentUser?.email || ''
+          }
+        };
+
+        this.exportService.exportToExcel(exportOptions);
+        this.notificationService.success(`${dataToExport.length} dépense(s) exportée(s) avec succès en Excel`);
+        this.closeExportModal();
       }
-    };
-
-    this.exportService.exportToExcel(exportOptions);
-    this.notificationService.success(`${dataToExport.length} dépense(s) exportée(s) avec succès en Excel`);
-    this.closeExportModal();
+    });
   }
 
   /**
@@ -523,49 +588,109 @@ export class DepensesComponent implements OnInit {
       return;
     }
 
-    // Créer le nom de fichier avec les dates si applicable
-    let filename = 'depenses';
-    if (this.exportDateDebut && this.exportDateFin) {
-      filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
-    } else if (this.exportDateDebut) {
-      filename += `_depuis_${this.exportDateDebut}`;
-    } else if (this.exportDateFin) {
-      filename += `_jusqu_au_${this.exportDateFin}`;
-    } else {
-      filename += `_${new Date().toISOString().split('T')[0]}`;
-    }
+    // Récupérer les informations de l'entreprise
+    this.tenantService.getTenantInfo().subscribe({
+      next: (tenant: Tenant) => {
+        const currentUser = this.authService.getCurrentUser();
 
-    const columns = [
-      { header: 'Date', field: 'dateDepense', format: (val: string) => this.formatDate(val) },
-      { header: 'Libellé', field: 'libelle' },
-      { header: 'Catégorie', field: 'categorie', format: (val: CategorieDepense) => this.getCategorieLabel(val) },
-      {
-        header: `Montant (${this.selectedCurrency?.symbole || 'CFA'})`,
-        field: 'montant',
-        format: (val: number) => val.toFixed(2)
-      },
-      { header: 'Description', field: 'description' }
-    ];
+        // Créer le nom de fichier avec les dates si applicable
+        let filename = 'depenses';
+        if (this.exportDateDebut && this.exportDateFin) {
+          filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+        } else if (this.exportDateDebut) {
+          filename += `_depuis_${this.exportDateDebut}`;
+        } else if (this.exportDateFin) {
+          filename += `_jusqu_au_${this.exportDateFin}`;
+        } else {
+          filename += `_${new Date().toISOString().split('T')[0]}`;
+        }
 
-    const exportOptions = {
-      filename,
-      title: 'Liste des Dépenses',
-      columns,
-      data: dataToExport,
-      dateRange: {
-        dateDebut: this.exportDateDebut,
-        dateFin: this.exportDateFin
+        const columns = [
+          { header: 'Date', field: 'dateDepense', format: (val: string) => this.formatDate(val) },
+          { header: 'Libellé', field: 'libelle' },
+          { header: 'Catégorie', field: 'categorie', format: (val: CategorieDepense) => this.getCategorieLabel(val) },
+          {
+            header: `Montant (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'montant',
+            format: (val: number) => val.toFixed(2)
+          },
+          { header: 'Description', field: 'description' }
+        ];
+
+        const exportOptions = {
+          filename,
+          title: 'Liste des Dépenses',
+          columns,
+          data: dataToExport,
+          dateRange: {
+            dateDebut: this.exportDateDebut,
+            dateFin: this.exportDateFin
+          },
+          companyInfo: {
+            nom: tenant.nomEntreprise || currentUser?.nomEntreprise || 'HeasyStock',
+            proprietaire: tenant.prenomProprietaire && tenant.nomProprietaire
+              ? `${tenant.prenomProprietaire} ${tenant.nomProprietaire}`
+              : '',
+            telephone: tenant.numeroTelephone || currentUser?.numeroTelephone || 'N/A',
+            adresse: tenant.adresse || '',
+            email: tenant.emailProprietaire || currentUser?.email || ''
+          }
+        };
+
+        this.exportService.exportToPDF(exportOptions);
+        this.notificationService.success(`${dataToExport.length} dépense(s) exportée(s) avec succès en PDF`);
+        this.closeExportModal();
       },
-      companyInfo: {
-        nom: 'HeasyStock',
-        proprietaire: '',
-        telephone: '+221 XX XXX XX XX',
-        adresse: 'Dakar, Sénégal'
+      error: (error) => {
+        console.error('Erreur lors de la récupération du tenant:', error);
+        // En cas d'erreur, exporter quand même sans les infos de l'entreprise
+        const currentUser = this.authService.getCurrentUser();
+
+        let filename = 'depenses';
+        if (this.exportDateDebut && this.exportDateFin) {
+          filename += `_${this.exportDateDebut}_au_${this.exportDateFin}`;
+        } else if (this.exportDateDebut) {
+          filename += `_depuis_${this.exportDateDebut}`;
+        } else if (this.exportDateFin) {
+          filename += `_jusqu_au_${this.exportDateFin}`;
+        } else {
+          filename += `_${new Date().toISOString().split('T')[0]}`;
+        }
+
+        const columns = [
+          { header: 'Date', field: 'dateDepense', format: (val: string) => this.formatDate(val) },
+          { header: 'Libellé', field: 'libelle' },
+          { header: 'Catégorie', field: 'categorie', format: (val: CategorieDepense) => this.getCategorieLabel(val) },
+          {
+            header: `Montant (${this.selectedCurrency?.symbole || 'CFA'})`,
+            field: 'montant',
+            format: (val: number) => val.toFixed(2)
+          },
+          { header: 'Description', field: 'description' }
+        ];
+
+        const exportOptions = {
+          filename,
+          title: 'Liste des Dépenses',
+          columns,
+          data: dataToExport,
+          dateRange: {
+            dateDebut: this.exportDateDebut,
+            dateFin: this.exportDateFin
+          },
+          companyInfo: {
+            nom: currentUser?.nomEntreprise || 'HeasyStock',
+            proprietaire: '',
+            telephone: currentUser?.numeroTelephone || 'N/A',
+            adresse: '',
+            email: currentUser?.email || ''
+          }
+        };
+
+        this.exportService.exportToPDF(exportOptions);
+        this.notificationService.success(`${dataToExport.length} dépense(s) exportée(s) avec succès en PDF`);
+        this.closeExportModal();
       }
-    };
-
-    this.exportService.exportToPDF(exportOptions);
-    this.notificationService.success(`${dataToExport.length} dépense(s) exportée(s) avec succès en PDF`);
-    this.closeExportModal();
+    });
   }
 }
