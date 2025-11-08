@@ -74,6 +74,10 @@ import { User } from '../../../core/models/auth.model';
             <span class="icon">📈</span>
             Rapports
           </a>
+          <a routerLink="/contact" routerLinkActive="active" (click)="closeMobileMenu()">
+            <span class="icon">📧</span>
+            Contact
+          </a>
         </nav>
       </div>
     </header>

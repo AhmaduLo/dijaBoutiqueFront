@@ -481,8 +481,8 @@ export class DepensesComponent implements OnInit {
         dateFin: this.exportDateFin
       },
       companyInfo: {
-        nom: 'Boutique Dija Saliou',
-        proprietaire: 'Saliou Dija',
+        nom: 'HeasyStock',
+        proprietaire: '',
         telephone: '+221 XX XXX XX XX',
         adresse: 'Dakar, Sénégal'
       }
@@ -557,8 +557,8 @@ export class DepensesComponent implements OnInit {
         dateFin: this.exportDateFin
       },
       companyInfo: {
-        nom: 'Boutique Dija Saliou',
-        proprietaire: 'Saliou Dija',
+        nom: 'HeasyStock',
+        proprietaire: '',
         telephone: '+221 XX XXX XX XX',
         adresse: 'Dakar, Sénégal'
       }

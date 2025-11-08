@@ -4,7 +4,7 @@
  */
 export const environment = {
   production: true,
-  apiUrl: 'https://api.dijaboutique.com/api',  // À modifier avec votre domaine
+  apiUrl: 'http://localhost:8080/api',  // À modifier avec votre domaine
   enableLogging: false,  // Désactiver les logs en production
   enableDebug: false     // Désactiver le debug en production
 };

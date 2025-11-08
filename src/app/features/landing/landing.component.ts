@@ -149,7 +149,7 @@ import { Router } from '@angular/router';
       <!-- Footer -->
       <footer class="landing-footer">
         <div class="container">
-          <p>&copy; 2025 Boutique Dija Saliou. Tous droits réservés.</p>
+          <p>&copy; 2025 HeasyStock. Tous droits réservés.</p>
         </div>
       </footer>
     </div>

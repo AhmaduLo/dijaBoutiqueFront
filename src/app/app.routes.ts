@@ -56,7 +56,7 @@ export const routes: Routes = [
     loadComponent: () => import('./features/rapports/rapports.component').then(m => m.RapportsComponent),
     canActivate: [adminOrGerantGuard]
   },
-  // Routes accessibles par USER + GERANT + ADMIN (Ventes, Stock)
+  // Routes accessibles par USER + GERANT + ADMIN (Ventes, Stock, Contact)
   {
     path: 'ventes',
     loadComponent: () => import('./features/ventes/ventes.component').then(m => m.VentesComponent),
@@ -65,6 +65,11 @@ export const routes: Routes = [
   {
     path: 'stock',
     loadComponent: () => import('./features/stock/stock-dashboard.component').then(m => m.StockDashboardComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'contact',
+    loadComponent: () => import('./features/contact/contact.component').then(m => m.ContactComponent),
     canActivate: [authGuard]
   },
   // Redirection par défaut
