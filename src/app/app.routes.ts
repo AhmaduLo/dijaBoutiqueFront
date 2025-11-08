@@ -70,7 +70,7 @@ export const routes: Routes = [
   {
     path: 'contact',
     loadComponent: () => import('./features/contact/contact.component').then(m => m.ContactComponent),
-    canActivate: [authGuard]
+    canActivate: [adminGuard]
   },
   // Redirection par défaut
   {
