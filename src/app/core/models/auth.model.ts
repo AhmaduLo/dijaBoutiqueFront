@@ -25,6 +25,8 @@ export interface RegisterRequest {
   adresseEntreprise: string;
   numeroTelephone: string;
   role?: 'USER' | 'ADMIN' | 'GERANT'; // Optionnel, par défaut USER
+  acceptationCGU?: boolean; // Acceptation des Conditions Générales d'Utilisation
+  acceptationPolitiqueConfidentialite?: boolean; // Acceptation de la Politique de Confidentialité
 }
 
 /**
