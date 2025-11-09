@@ -971,7 +971,37 @@ export class VentesComponent implements OnInit {
     this.isEditing = true;
     this.currentVenteId = vente.id;
     this.showForm = true;
-    this.venteForm.patchValue(vente);
+
+    // Réinitialiser le formulaire
+    this.venteForm.reset();
+
+    // Vider le FormArray des produits
+    while (this.produits.length > 0) {
+      this.produits.removeAt(0);
+    }
+
+    // Remplir les informations client et date
+    this.venteForm.patchValue({
+      client: vente.client,
+      telephoneClient: '',
+      adresseClient: '',
+      dateVente: vente.dateVente
+    });
+
+    // Ajouter le produit de la vente au FormArray
+    const produitGroup = this.creerLigneProduit();
+    produitGroup.patchValue({
+      nomProduit: vente.nomProduit,
+      quantite: vente.quantite,
+      prixUnitaire: vente.prixUnitaire,
+      prixTotal: vente.prixTotal
+    });
+    this.produits.push(produitGroup);
+
+    // Initialiser les données de recherche pour cette ligne
+    this.searchTermsProduits[0] = vente.nomProduit;
+    this.produitsFiltre[0] = [...this.produitsDisponibles];
+    this.showDropdownProduit[0] = false;
   }
 
   async deleteVente(vente: Vente): Promise<void> {
