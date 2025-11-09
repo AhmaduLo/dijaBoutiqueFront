@@ -87,6 +87,14 @@ import { RegisterRequest } from '../../core/models/auth.model';
           </div>
 
           <div class="form-group">
+            <label>NINEA / SIRET (optionnel)</label>
+            <input type="text" formControlName="nineaSiret" placeholder="Ex: 123456789" />
+            <small style="color: #666; display: block; margin-top: 0.25rem;">
+              Numéro d'identification de votre entreprise (NINEA pour le Sénégal, SIRET pour la France)
+            </small>
+          </div>
+
+          <div class="form-group">
             <label>Mot de passe *</label>
             <input type="password" formControlName="password" placeholder="Minimum 6 caractères" />
             <div class="error" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
@@ -327,6 +335,7 @@ export class RegisterComponent {
       adresseEntreprise: ['', Validators.required],
       indicatifPays: ['SN', Validators.required],
       numeroTelephone: ['', Validators.required],
+      nineaSiret: [''], // Optionnel
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', Validators.required],
       acceptationCGU: [false, Validators.requiredTrue],

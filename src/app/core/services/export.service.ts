@@ -26,6 +26,7 @@ export interface ExportOptions {
     email?: string;
     ville?: string;
     codePostal?: string;
+    nineaSiret?: string;
   };
 }
 
@@ -60,6 +61,7 @@ export interface FactureOptions {
     codePostal?: string;
     telephone: string;
     email?: string;
+    nineaSiret?: string;
   };
   client: {
     nom: string;
@@ -105,6 +107,9 @@ export class ExportService {
       headerRows.push([`Tél: ${companyInfo.telephone}`]);
       if (companyInfo.adresse) {
         headerRows.push([`Adresse: ${companyInfo.adresse}`]);
+      }
+      if (companyInfo.nineaSiret) {
+        headerRows.push([`NINEA/SIRET: ${companyInfo.nineaSiret}`]);
       }
       headerRows.push([]); // Ligne vide
     }
@@ -186,15 +191,15 @@ export class ExportService {
     if (companyInfo) {
       // Fond vert foncé professionnel pour l'en-tête (même couleur que les factures: #344934)
       doc.setFillColor(52, 73, 52);
-      doc.rect(0, 0, 210, 45, 'F');
+      doc.rect(0, 0, 210, 52, 'F');
 
       // Forme diagonale blanche en bas à droite (effet moderne)
       doc.setFillColor(255, 255, 255);
       // Points du triangle: (x1,y1), (x2,y2), (x3,y3)
       const trianglePoints = [
-        { x: 160, y: 45 },  // Point bas gauche
-        { x: 210, y: 25 },  // Point haut droit
-        { x: 210, y: 45 }   // Point bas droit
+        { x: 160, y: 52 },  // Point bas gauche
+        { x: 210, y: 32 },  // Point haut droit
+        { x: 210, y: 52 }   // Point bas droit
       ];
       doc.triangle(trianglePoints[0].x, trianglePoints[0].y,
         trianglePoints[1].x, trianglePoints[1].y,
@@ -213,7 +218,7 @@ export class ExportService {
       doc.text(companyInfo.nom.toUpperCase(), 14, 34);
 
       // Informations de contact (blanc, plus petites, alignées à droite)
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       doc.setFont('helvetica', 'normal');
       const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -222,17 +227,23 @@ export class ExportService {
       // Adresse si disponible
       if (companyInfo.adresse) {
         doc.text(`Adresse : ${companyInfo.adresse}`, pageWidth - 14, contactYPos, { align: 'right' });
-        contactYPos += 5;
+        contactYPos += 4.5;
       }
 
       // Numéro de téléphone
       doc.text(`Numero de telephone : ${companyInfo.telephone}`, pageWidth - 14, contactYPos, { align: 'right' });
-      contactYPos += 5;
+      contactYPos += 4.5;
 
       // Email si disponible
       if (companyInfo.email) {
         doc.text(`Email : ${companyInfo.email}`, pageWidth - 14, contactYPos, { align: 'right' });
-        contactYPos += 5;
+        contactYPos += 4.5;
+      }
+
+      // NINEA/SIRET si disponible
+      if (companyInfo.nineaSiret) {
+        doc.text(`NINEA/SIRET : ${companyInfo.nineaSiret}`, pageWidth - 14, contactYPos, { align: 'right' });
+        contactYPos += 4.5;
       }
 
       // Propriétaire si disponible
@@ -242,7 +253,7 @@ export class ExportService {
 
       // Réinitialiser la couleur du texte pour le reste du document
       doc.setTextColor(0, 0, 0);
-      yPosition = 55;
+      yPosition = 62;
     }
 
     // Titre du document
@@ -459,8 +470,18 @@ export class ExportService {
       doc.text(options.entreprise.email, 14, yPos + 5);
     }
 
+    if (options.entreprise.nineaSiret) {
+      yPos += 12;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text("NINEA/SIRET", 14, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(options.entreprise.nineaSiret, 14, yPos + 5);
+    }
+
     // Colonne droite - Informations du client
-    yPos = 45;
+    yPos = 50;
     const colDroite = pageWidth / 2 + 10;
 
     doc.setFont('helvetica', 'bold');
@@ -500,12 +521,25 @@ export class ExportService {
       doc.text(options.client.email, colDroite, yPos + 5);
     }
 
-    // ========== DATE DE FACTURE ==========
-    // Calculer la position dynamique (minimum 100, ajusté selon le contenu)
-    yPos = Math.max(100, yPos + 20);
+    // ========== DATE ET HEURE DE FACTURE ==========
+    // Calculer la position dynamique (minimum 110, ajusté selon le contenu)
+    yPos = Math.max(110, yPos + 25);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.text(`Date de facture: ${options.dateFacture}`, 14, yPos);
+
+    // Formater la date et l'heure
+    const dateFacture = new Date(options.dateFacture);
+    const dateFormatee = dateFacture.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    const heureFormatee = dateFacture.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    doc.text(`Date de facture: ${dateFormatee} à ${heureFormatee}`, 14, yPos);
 
     // ========== TABLEAU DES PRODUITS ==========
     yPos += 10;
@@ -592,11 +626,11 @@ export class ExportService {
     if (options.companyInfo) {
       // Fond bleu-gris foncé pour l'en-tête
       doc.setFillColor(74, 95, 109);
-      doc.rect(0, 0, pageWidth, 45, 'F');
+      doc.rect(0, 0, pageWidth, 52, 'F');
 
       // Forme diagonale blanche en bas à droite
       doc.setFillColor(255, 255, 255);
-      doc.triangle(160, 45, 210, 25, 210, 45, 'F');
+      doc.triangle(160, 52, 210, 32, 210, 52, 'F');
 
       // Nom de l'entreprise
       doc.setTextColor(255, 255, 255);
@@ -605,16 +639,21 @@ export class ExportService {
       doc.text(options.companyInfo.nom, 14, 20);
 
       // Informations de contact
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       doc.setFont('helvetica', 'normal');
       let contactYPos = 18;
 
       doc.text(`Numero : ${options.companyInfo.telephone}`, pageWidth - 14, contactYPos, { align: 'right' });
-      contactYPos += 5;
+      contactYPos += 4.5;
 
       if (options.companyInfo.adresse) {
         doc.text(`Adresse : ${options.companyInfo.adresse}`, pageWidth - 14, contactYPos, { align: 'right' });
-        contactYPos += 5;
+        contactYPos += 4.5;
+      }
+
+      if (options.companyInfo.nineaSiret) {
+        doc.text(`NINEA/SIRET : ${options.companyInfo.nineaSiret}`, pageWidth - 14, contactYPos, { align: 'right' });
+        contactYPos += 4.5;
       }
 
       if (options.companyInfo.proprietaire) {
@@ -622,7 +661,7 @@ export class ExportService {
       }
 
       doc.setTextColor(0, 0, 0);
-      yPosition = 55;
+      yPosition = 62;
     }
 
     // ========== TITRE ET PÉRIODE ==========

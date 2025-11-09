@@ -859,12 +859,18 @@ export class VentesComponent implements OnInit {
         // Générer un numéro de facture séquentiel (FAC-001, FAC-002, etc.)
         const numeroFacture = this.factureNumeroService.genererNumeroFacture();
 
-        // Formater la date
-        const dateFacture = new Date(donneesClient.dateVente).toLocaleDateString('fr-FR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        });
+        // Utiliser la date de vente avec l'heure actuelle de génération de la facture
+        const dateVente = new Date(donneesClient.dateVente);
+        const maintenant = new Date();
+        // Combiner la date de vente avec l'heure actuelle
+        const dateFacture = new Date(
+          dateVente.getFullYear(),
+          dateVente.getMonth(),
+          dateVente.getDate(),
+          maintenant.getHours(),
+          maintenant.getMinutes(),
+          maintenant.getSeconds()
+        ).toISOString();
 
         // Préparer les options de facture avec l'adresse du tenant
         const factureOptions = {
@@ -876,7 +882,8 @@ export class VentesComponent implements OnInit {
             ville: undefined,
             codePostal: undefined,
             telephone: tenant.numeroTelephone || currentUser.numeroTelephone || 'N/A',
-            email: currentUser.email
+            email: currentUser.email,
+            nineaSiret: tenant.nineaSiret || undefined
           },
           client: {
             nom: donneesClient.client,
@@ -1088,7 +1095,8 @@ export class VentesComponent implements OnInit {
               : '',
             telephone: tenant.numeroTelephone || currentUser?.numeroTelephone || 'N/A',
             adresse: tenant.adresse || '',
-            email: tenant.emailProprietaire || currentUser?.email || ''
+            email: tenant.emailProprietaire || currentUser?.email || '',
+            nineaSiret: tenant.nineaSiret || ''
           }
         };
 
@@ -1234,7 +1242,8 @@ export class VentesComponent implements OnInit {
               : '',
             telephone: tenant.numeroTelephone || currentUser?.numeroTelephone || 'N/A',
             adresse: tenant.adresse || '',
-            email: tenant.emailProprietaire || currentUser?.email || ''
+            email: tenant.emailProprietaire || currentUser?.email || '',
+            nineaSiret: tenant.nineaSiret || ''
           }
         };
 

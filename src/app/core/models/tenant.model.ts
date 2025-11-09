@@ -6,6 +6,7 @@ export interface Tenant {
   nomEntreprise: string;
   adresse?: string;
   numeroTelephone: string;
+  nineaSiret?: string;           // Numéro NINEA (Sénégal) ou SIRET (France) - optionnel
   nomProprietaire?: string;      // Nom de l'administrateur propriétaire
   prenomProprietaire?: string;   // Prénom de l'administrateur propriétaire
   emailProprietaire?: string;    // Email de l'administrateur propriétaire
@@ -18,4 +19,5 @@ export interface UpdateTenantDto {
   nomEntreprise: string;
   adresse?: string;
   numeroTelephone: string;
+  nineaSiret?: string;           // Numéro NINEA (Sénégal) ou SIRET (France) - optionnel
 }

@@ -97,7 +97,8 @@ export class AdminDashboardComponent implements OnInit {
     this.tenantForm = this.fb.group({
       nomEntreprise: ['', Validators.required],
       adresse: ['', Validators.required],
-      numeroTelephone: ['', Validators.required]
+      numeroTelephone: ['', Validators.required],
+      nineaSiret: [''] // Optionnel
     });
   }
 
@@ -524,7 +525,8 @@ export class AdminDashboardComponent implements OnInit {
         this.tenantForm.patchValue({
           nomEntreprise: tenant.nomEntreprise,
           adresse: tenant.adresse || '',
-          numeroTelephone: tenant.numeroTelephone
+          numeroTelephone: tenant.numeroTelephone,
+          nineaSiret: tenant.nineaSiret || ''
         });
         this.isLoadingTenant = false;
       },
@@ -546,7 +548,8 @@ export class AdminDashboardComponent implements OnInit {
       this.tenantForm.patchValue({
         nomEntreprise: this.tenant.nomEntreprise,
         adresse: this.tenant.adresse || '',
-        numeroTelephone: this.tenant.numeroTelephone
+        numeroTelephone: this.tenant.numeroTelephone,
+        nineaSiret: this.tenant.nineaSiret || ''
       });
     }
   }
@@ -564,7 +567,8 @@ export class AdminDashboardComponent implements OnInit {
     const updateData: UpdateTenantDto = {
       nomEntreprise: formValue.nomEntreprise,
       adresse: formValue.adresse,
-      numeroTelephone: formValue.numeroTelephone
+      numeroTelephone: formValue.numeroTelephone,
+      nineaSiret: formValue.nineaSiret || undefined
     };
 
     this.tenantService.updateTenant(updateData).subscribe({

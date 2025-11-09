@@ -497,7 +497,8 @@ export class DepensesComponent implements OnInit {
               : '',
             telephone: tenant.numeroTelephone || currentUser?.numeroTelephone || 'N/A',
             adresse: tenant.adresse || '',
-            email: tenant.emailProprietaire || currentUser?.email || ''
+            email: tenant.emailProprietaire || currentUser?.email || '',
+            nineaSiret: tenant.nineaSiret || ''
           }
         };
 
@@ -633,7 +634,8 @@ export class DepensesComponent implements OnInit {
               : '',
             telephone: tenant.numeroTelephone || currentUser?.numeroTelephone || 'N/A',
             adresse: tenant.adresse || '',
-            email: tenant.emailProprietaire || currentUser?.email || ''
+            email: tenant.emailProprietaire || currentUser?.email || '',
+            nineaSiret: tenant.nineaSiret || ''
           }
         };
 
