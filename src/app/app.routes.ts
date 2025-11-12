@@ -28,6 +28,23 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent),
     canActivate: [guestGuard]
   },
+  // Route publique de tarification et paiement (AVANT inscription)
+  {
+    path: 'pricing',
+    loadComponent: () => import('./features/pricing/pricing.component').then(m => m.PricingComponent)
+  },
+  // Route de paiement isolée (page dédiée sans menu - OBLIGATOIRE après connexion si plan GRATUIT)
+  {
+    path: 'payment',
+    loadComponent: () => import('./features/payment-only/payment-only.component').then(m => m.PaymentOnlyComponent),
+    canActivate: [authGuard]
+  },
+  // Route d'abonnement (accessible aux utilisateurs authentifiés)
+  {
+    path: 'subscription',
+    loadComponent: () => import('./features/subscription/subscription.component').then(m => m.SubscriptionComponent),
+    canActivate: [authGuard]
+  },
   // Routes protégées (nécessitent une authentification)
   // Routes ADMIN uniquement (Administration)
   {

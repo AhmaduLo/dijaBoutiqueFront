@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { PaymentService } from '../../core/services/payment.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { LoginRequest } from '../../core/models/auth.model';
 
@@ -64,6 +65,7 @@ export class LoginComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    private paymentService: PaymentService,
     private notificationService: NotificationService,
     private router: Router
   ) {
@@ -93,13 +95,31 @@ export class LoginComponent {
     this.authService.login(credentials).subscribe({
       next: (response) => {
         this.notificationService.success(`Bienvenue ${response.user.prenom} !`);
-        // Rediriger selon le rôle de l'utilisateur
-        if (response.user.role === 'ADMIN' || response.user.role === 'GERANT') {
-          this.router.navigate(['/dashboard']);
-        } else {
-          this.router.navigate(['/ventes']);
-        }
-        this.isSubmitting = false;
+
+        // Vérifier le statut d'abonnement AVANT de rediriger
+        this.paymentService.getSubscriptionStatus().subscribe({
+          next: (subscriptionStatus) => {
+            // Si le plan est GRATUIT ou expiré, rediriger vers /payment
+            if (!subscriptionStatus.actif) {
+              this.notificationService.info('Veuillez choisir un plan pour accéder à HeasyStock.');
+              this.router.navigate(['/payment']);
+            } else {
+              // Si l'abonnement est actif, rediriger selon le rôle
+              if (response.user.role === 'ADMIN' || response.user.role === 'GERANT') {
+                this.router.navigate(['/dashboard']);
+              } else {
+                this.router.navigate(['/ventes']);
+              }
+            }
+            this.isSubmitting = false;
+          },
+          error: (error) => {
+            console.error('Erreur lors de la vérification de l\'abonnement:', error);
+            // En cas d'erreur, rediriger vers /payment par sécurité
+            this.router.navigate(['/payment']);
+            this.isSubmitting = false;
+          }
+        });
       },
       error: (error) => {
         this.notificationService.error(error.message || 'Email ou mot de passe incorrect');

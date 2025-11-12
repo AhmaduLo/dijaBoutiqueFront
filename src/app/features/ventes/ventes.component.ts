@@ -18,11 +18,14 @@ import { ProduitPourVente } from '../../core/models/produit-pour-vente.model';
 import { FactureNumeroService } from '../../core/services/facture-numero.service';
 import { TenantService } from '../../core/services/tenant.service';
 import { Tenant } from '../../core/models/tenant.model';
+import { PlanRestrictionService } from '../../core/services/plan-restriction.service';
+import { PaymentService } from '../../core/services/payment.service';
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-ventes',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyEurPipe],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyEurPipe, RouterModule],
   template: `
     <div class="ventes">
       <div class="page-header">
@@ -31,7 +34,7 @@ import { Tenant } from '../../core/models/tenant.model';
           <button class="btn btn-primary" (click)="refreshData()">
             🔄 Actualiser
           </button>
-          <button class="btn btn-success" (click)="openExportModal()" *ngIf="isAdminOrGerant()">
+          <button class="btn btn-success" (click)="openExportModal()" *ngIf="canExport && isAdminOrGerant()">
             📊 Exporter
           </button>
           <button class="btn btn-primary" (click)="openForm()">
@@ -343,6 +346,11 @@ export class VentesComponent implements OnInit {
   produitsFiltre: StockDto[][] = []; // Produits filtrés par ligne
   showDropdownProduit: boolean[] = []; // Affichage du dropdown par ligne
 
+  // Restrictions par plan
+  canExport = false;
+  canGenerateInvoices = false;
+  restrictionMessage = '';
+
   constructor(
     private fb: FormBuilder,
     private venteService: VenteService,
@@ -354,7 +362,10 @@ export class VentesComponent implements OnInit {
     private exportService: ExportService,
     private authService: AuthService,
     private factureNumeroService: FactureNumeroService,
-    private tenantService: TenantService
+    private tenantService: TenantService,
+    private planRestrictionService: PlanRestrictionService,
+    private paymentService: PaymentService,
+    private router: Router
   ) {
     this.venteForm = this.fb.group({
       client: [''],
@@ -415,10 +426,29 @@ export class VentesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Charger le statut d'abonnement en premier
+    this.paymentService.loadSubscriptionStatus();
+
+    // Souscrire aux changements du statut d'abonnement pour mettre à jour les permissions
+    this.paymentService.subscriptionStatus$.subscribe(() => {
+      this.checkExportPermission();
+    });
+
     this.loadCurrencies();
     this.loadVentes();
     this.loadProduitsDisponibles();
     this.chargerPrixVenteSuggeres();
+  }
+
+  /**
+   * Vérifie si l'utilisateur peut exporter les ventes individuelles et générer des factures
+   */
+  private checkExportPermission(): void {
+    this.canExport = this.planRestrictionService.canExportIndividual();
+    this.canGenerateInvoices = this.planRestrictionService.canGenerateInvoices();
+    if (!this.canExport) {
+      this.restrictionMessage = this.planRestrictionService.getRestrictionMessage('export des ventes');
+    }
   }
 
   /**
@@ -811,8 +841,15 @@ export class VentesComponent implements OnInit {
 
   /**
    * Propose la création d'une facture après l'enregistrement des ventes
+   * Uniquement disponible pour le plan ENTREPRISE
    */
   private async proposerCreationFacture(ventes: Vente[]): Promise<void> {
+    // Vérifier si l'utilisateur a accès à la facturation (plan ENTREPRISE uniquement)
+    if (!this.canGenerateInvoices) {
+      // Ne pas proposer la facture pour les plans BASIC et PREMIUM
+      return;
+    }
+
     const confirmed = await this.confirmService.confirm({
       title: 'Générer une facture',
       message: `Voulez-vous générer une facture PDF pour cette vente (${ventes.length} produit(s)) ?`,
@@ -1039,6 +1076,10 @@ export class VentesComponent implements OnInit {
   }
 
   openExportModal(): void {
+    if (!this.canExport) {
+      this.notificationService.warning(this.restrictionMessage);
+      return;
+    }
     this.showExportModal = true;
     this.exportDateDebut = undefined;
     this.exportDateFin = undefined;

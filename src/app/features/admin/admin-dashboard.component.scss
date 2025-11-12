@@ -943,4 +943,26 @@
       }
     }
   }
+
+  // Styles pour le modal de changement de plan
+  .current-plan-card {
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3) !important;
+    transform: scale(1.02);
+  }
+
+  .recommended {
+    box-shadow: 0 8px 24px rgba(255, 152, 0, 0.2) !important;
+  }
+}
+
+// Animation slideUp pour le modal
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

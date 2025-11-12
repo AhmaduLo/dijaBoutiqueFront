@@ -40,6 +40,32 @@
     color: #666;
     font-size: 1rem;
   }
+
+  .payment-confirmation {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    border: 2px solid #22c55e;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-top: 1rem;
+
+    .success-message {
+      color: #166534;
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem 0;
+
+      strong {
+        color: #15803d;
+        text-transform: uppercase;
+      }
+    }
+
+    .info-message {
+      color: #166534;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+  }
 }
 
 .form-group {

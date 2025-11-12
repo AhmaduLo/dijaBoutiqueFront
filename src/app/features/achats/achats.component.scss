@@ -256,4 +256,76 @@
       min-width: 800px;
     }
   }
+
+  // Message de restriction par plan
+  .restriction-message {
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #fff9e6 0%, #fff3d4 100%);
+    border: 2px solid #ff9800;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.1);
+
+    .alert-content {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.5rem;
+
+      .icon-lock {
+        font-size: 32px;
+        flex-shrink: 0;
+      }
+
+      .message-text {
+        flex: 1;
+
+        strong {
+          display: block;
+          color: #e65100;
+          font-size: 1.2rem;
+          margin-bottom: 0.5rem;
+          font-weight: 700;
+        }
+
+        p {
+          color: #bf360c;
+          margin: 0.5rem 0 1rem;
+          line-height: 1.6;
+          font-size: 0.95rem;
+        }
+
+        .btn-upgrade {
+          display: inline-block;
+          background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+          color: white;
+          padding: 0.75rem 1.5rem;
+          border-radius: 8px;
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 0.95rem;
+          transition: all 0.3s ease;
+          border: none;
+          cursor: pointer;
+
+          &:hover {
+            background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+          }
+        }
+      }
+    }
+  }
+
+  // Désactiver visuellement le bouton export
+  .btn-success:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #ccc;
+
+    &:hover {
+      background: #ccc;
+      transform: none;
+    }
+  }
 }

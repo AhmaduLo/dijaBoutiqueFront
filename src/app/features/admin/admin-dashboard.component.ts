@@ -19,11 +19,14 @@ import {
 } from '../../core/models/admin.model';
 import { Currency, CreateCurrencyDto, DEVISES_COMMUNES } from '../../core/models/currency.model';
 import { Tenant, UpdateTenantDto } from '../../core/models/tenant.model';
+import { PlanAbonnement } from '../../core/models/payment.model';
+import { PaymentService } from '../../core/services/payment.service';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.scss']
 })
@@ -63,6 +66,11 @@ export class AdminDashboardComponent implements OnInit {
   isEditingTenant = false;
   isLoadingTenant = false;
 
+  // Plan d'abonnement
+  showPlanModal = false;
+  currentPlan = PlanAbonnement.BASIC;
+  PlanAbonnement = PlanAbonnement; // Pour utiliser l'enum dans le template
+
   constructor(
     private fb: FormBuilder,
     private adminService: AdminService,
@@ -72,7 +80,8 @@ export class AdminDashboardComponent implements OnInit {
     private notificationService: NotificationService,
     private planService: PlanService,
     private confirmService: ConfirmService,
-    private router: Router
+    private router: Router,
+    private paymentService: PaymentService
   ) {
     this.currentUser = this.authService.getCurrentUser() || undefined;
 
@@ -661,5 +670,68 @@ Cette action prendra effet IMMÉDIATEMENT.`,
         this.isSubmitting = false;
       }
     });
+  }
+
+  /**
+   * Charge le plan d'abonnement actuel
+   */
+  loadCurrentPlan(): void {
+    this.currentPlan = this.paymentService.getCurrentPlan();
+  }
+
+  /**
+   * Ouvre le modal de changement de plan
+   */
+  openPlanModal(): void {
+    this.loadCurrentPlan();
+    this.showPlanModal = true;
+  }
+
+  /**
+   * Ferme le modal de changement de plan
+   */
+  closePlanModal(): void {
+    this.showPlanModal = false;
+  }
+
+  /**
+   * Retourne le nom du plan formaté pour l'affichage
+   */
+  getPlanName(plan: PlanAbonnement): string {
+    switch (plan) {
+      case PlanAbonnement.BASIC:
+        return 'Plan Basic';
+      case PlanAbonnement.PRO:
+      case PlanAbonnement.PREMIUM:
+        return 'Plan Premium';
+      case PlanAbonnement.ENTREPRISE:
+        return 'Plan Entreprise';
+      default:
+        return 'Plan Basic';
+    }
+  }
+
+  /**
+   * Retourne la description du plan
+   */
+  getPlanDescription(plan: PlanAbonnement): string {
+    switch (plan) {
+      case PlanAbonnement.BASIC:
+        return 'Gestion complète + Rapports globaux (9.99€/mois)';
+      case PlanAbonnement.PRO:
+      case PlanAbonnement.PREMIUM:
+        return 'Toutes les fonctionnalités + Exports individuels (29.99€/mois)';
+      case PlanAbonnement.ENTREPRISE:
+        return 'Solution complète + Support 24/7 (99.99€/mois)';
+      default:
+        return 'Gestion complète + Rapports globaux (9.99€/mois)';
+    }
+  }
+
+  /**
+   * Vérifie si c'est le plan actuel
+   */
+  isCurrentPlan(plan: PlanAbonnement): boolean {
+    return this.currentPlan === plan;
   }
 }

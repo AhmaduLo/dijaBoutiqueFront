@@ -13,11 +13,14 @@ import { ExportService } from '../../core/services/export.service';
 import { TenantService } from '../../core/services/tenant.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Tenant } from '../../core/models/tenant.model';
+import { PlanRestrictionService } from '../../core/services/plan-restriction.service';
+import { PaymentService } from '../../core/services/payment.service';
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-depenses',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyEurPipe],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyEurPipe, RouterModule],
   template: `
     <div class="depenses">
       <div class="page-header">
@@ -26,7 +29,7 @@ import { Tenant } from '../../core/models/tenant.model';
           <button class="btn btn-primary" (click)="refreshData()">
             🔄 Actualiser
           </button>
-          <button class="btn btn-success" (click)="openExportModal()">
+          <button class="btn btn-success" (click)="openExportModal()" *ngIf="canExport">
             📊 Exporter
           </button>
           <button class="btn btn-primary" (click)="openForm()">
@@ -226,6 +229,10 @@ export class DepensesComponent implements OnInit {
   selectedCurrency?: Currency;
   defaultCurrency?: Currency;
 
+  // Restrictions par plan
+  canExport = false;
+  restrictionMessage = '';
+
   constructor(
     private fb: FormBuilder,
     private depenseService: DepenseService,
@@ -234,7 +241,10 @@ export class DepensesComponent implements OnInit {
     private confirmService: ConfirmService,
     private exportService: ExportService,
     private tenantService: TenantService,
-    private authService: AuthService
+    private authService: AuthService,
+    private planRestrictionService: PlanRestrictionService,
+    private paymentService: PaymentService,
+    private router: Router
   ) {
     this.categories = this.depenseService.getCategories();
     this.depenseForm = this.fb.group({
@@ -248,8 +258,26 @@ export class DepensesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Charger le statut d'abonnement en premier
+    this.paymentService.loadSubscriptionStatus();
+
+    // Souscrire aux changements du statut d'abonnement pour mettre à jour les permissions
+    this.paymentService.subscriptionStatus$.subscribe(() => {
+      this.checkExportPermission();
+    });
+
     this.loadCurrencies();
     this.loadDepenses();
+  }
+
+  /**
+   * Vérifie si l'utilisateur peut exporter les dépenses individuelles
+   */
+  private checkExportPermission(): void {
+    this.canExport = this.planRestrictionService.canExportIndividual();
+    if (!this.canExport) {
+      this.restrictionMessage = this.planRestrictionService.getRestrictionMessage('export des dépenses');
+    }
   }
 
   /**
@@ -416,6 +444,10 @@ export class DepensesComponent implements OnInit {
   }
 
   openExportModal(): void {
+    if (!this.canExport) {
+      this.notificationService.warning(this.restrictionMessage);
+      return;
+    }
     this.showExportModal = true;
     this.exportDateDebut = undefined;
     this.exportDateFin = undefined;

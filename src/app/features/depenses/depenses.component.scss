@@ -199,3 +199,74 @@
     }
   }
 }
+
+// Styles pour le message de restriction par plan
+.restriction-message {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #fff9e6 0%, #fff3d4 100%);
+  border: 2px solid #ff9800;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.1);
+
+  .alert-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+
+    .icon-lock {
+      font-size: 28px;
+      color: #f57c00;
+    }
+
+    .message-text {
+      flex: 1;
+
+      strong {
+        display: block;
+        color: #e65100;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      p {
+        color: #bf360c;
+        margin: 0.5rem 0 1rem;
+        line-height: 1.5;
+      }
+
+      .btn-upgrade {
+        display: inline-block;
+        background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
+
+        &:hover {
+          background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+      }
+    }
+  }
+}
+
+.btn-success:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #ccc;
+
+  &:hover {
+    background: #ccc;
+    transform: none;
+  }
+}

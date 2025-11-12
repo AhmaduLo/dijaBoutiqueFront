@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -19,7 +19,8 @@ import { RegisterRequest } from '../../core/models/auth.model';
         <div class="auth-header">
           <h1>✨ HeasyStock</h1>
           <h2>Créer un compte</h2>
-          <p>Inscrivez-vous pour gérer votre activité</p>
+          <p>Inscrivez-vous gratuitement pour gérer votre activité</p>
+          <p class="info-message">💡 Vous choisirez votre plan après la création du compte</p>
         </div>
 
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
@@ -286,7 +287,7 @@ import { RegisterRequest } from '../../core/models/auth.model';
   `,
   styleUrls: ['./auth.component.scss']
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   registerForm: FormGroup;
   isSubmitting = false;
   showCGUModal = false;
@@ -343,6 +344,10 @@ export class RegisterComponent {
     }, { validators: this.passwordMatchValidator });
   }
 
+  ngOnInit(): void {
+    // Plus de logique de paiement ici
+  }
+
   /**
    * Validateur personnalisé pour vérifier que les mots de passe correspondent
    */
@@ -385,8 +390,11 @@ export class RegisterComponent {
 
     this.authService.register(dataToSend).subscribe({
       next: (response) => {
-        this.notificationService.success(`Bienvenue ${response.user.prenom} ! Inscription réussie.`);
-        this.router.navigate(['/dashboard']);
+        this.notificationService.success(`Bienvenue ${response.user.prenom} ! Votre compte a été créé avec succès.`);
+
+        // Rediriger vers la page de connexion
+        this.notificationService.success('Veuillez vous connecter pour accéder à votre compte.');
+        this.router.navigate(['/login']);
         this.isSubmitting = false;
       },
       error: (error) => {

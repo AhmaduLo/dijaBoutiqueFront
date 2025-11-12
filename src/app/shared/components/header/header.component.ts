@@ -16,7 +16,7 @@ import { User } from '../../../core/models/auth.model';
     <header class="header">
       <div class="header-content">
         <div class="header-top">
-          <div class="logo">
+          <div class="logo" (click)="goToHome()" style="cursor: pointer;">
             <h1>✨ {{ getCompanyName() }}</h1>
             <p class="subtitle" *ngIf="isAuthenticated">Gestion commerciale</p>
             <p class="subtitle" *ngIf="!isAuthenticated">HeasyStock - Gestion simplifiée</p>
@@ -41,7 +41,6 @@ import { User } from '../../../core/models/auth.model';
             </div>
             <div class="auth-links" *ngIf="!isAuthenticated">
               <a routerLink="/login" class="btn-link">Connexion</a>
-              <a routerLink="/register" class="btn-link btn-primary">Inscription</a>
             </div>
             <button class="burger-menu" *ngIf="isAuthenticated" (click)="toggleMobileMenu()">
               <span class="burger-icon">{{ showMobileMenu ? '✕' : '☰' }}</span>
@@ -133,6 +132,11 @@ export class HeaderComponent implements OnInit {
       return this.currentUser.nomEntreprise;
     }
     return 'HeasyStock';
+  }
+
+  goToHome(): void {
+    // Rediriger vers la landing page
+    this.router.navigate(['/']);
   }
 
   async logout(): Promise<void> {

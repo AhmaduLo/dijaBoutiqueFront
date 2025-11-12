@@ -15,6 +15,9 @@ import { ExportService } from '../../core/services/export.service';
 import { TenantService } from '../../core/services/tenant.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Tenant } from '../../core/models/tenant.model';
+import { PlanRestrictionService } from '../../core/services/plan-restriction.service';
+import { PaymentService } from '../../core/services/payment.service';
+import { Router, RouterModule } from '@angular/router';
 
 /**
  * Composant de gestion des achats de stock
@@ -22,7 +25,7 @@ import { Tenant } from '../../core/models/tenant.model';
 @Component({
   selector: 'app-achats',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyEurPipe],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyEurPipe, RouterModule],
   template: `
     <div class="achats">
       <div class="page-header">
@@ -31,7 +34,10 @@ import { Tenant } from '../../core/models/tenant.model';
           <button class="btn btn-primary" (click)="refreshData()">
             🔄 Actualiser
           </button>
-          <button class="btn btn-success" (click)="openExportModal()">
+          <button
+            *ngIf="canExport"
+            class="btn btn-success"
+            (click)="openExportModal()">
             📊 Exporter
           </button>
           <button class="btn btn-primary" (click)="openForm()">
@@ -296,6 +302,10 @@ export class AchatsComponent implements OnInit {
   selectedCurrency?: Currency;
   defaultCurrency?: Currency;
 
+  // Restrictions par plan
+  canExport = false;
+  restrictionMessage = '';
+
   constructor(
     private fb: FormBuilder,
     private achatService: AchatService,
@@ -305,7 +315,10 @@ export class AchatsComponent implements OnInit {
     private confirmService: ConfirmService,
     private exportService: ExportService,
     private tenantService: TenantService,
-    private authService: AuthService
+    private authService: AuthService,
+    private planRestrictionService: PlanRestrictionService,
+    private paymentService: PaymentService,
+    private router: Router
   ) {
     this.achatForm = this.fb.group({
       nomProduit: ['', Validators.required],
@@ -320,9 +333,27 @@ export class AchatsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Charger le statut d'abonnement en premier
+    this.paymentService.loadSubscriptionStatus();
+
+    // Souscrire aux changements du statut d'abonnement pour mettre à jour les permissions
+    this.paymentService.subscriptionStatus$.subscribe(() => {
+      this.checkExportPermission();
+    });
+
     this.loadAchats();
     this.loadProduitsExistants();
     this.loadCurrencies();
+  }
+
+  /**
+   * Vérifie si l'utilisateur peut exporter (selon son plan)
+   */
+  private checkExportPermission(): void {
+    this.canExport = this.planRestrictionService.canExportIndividual();
+    if (!this.canExport) {
+      this.restrictionMessage = this.planRestrictionService.getRestrictionMessage('export des achats');
+    }
   }
 
   loadCurrencies(): void {
@@ -570,6 +601,12 @@ export class AchatsComponent implements OnInit {
    * Ouvre le modal d'export
    */
   openExportModal(): void {
+    // Vérifier les permissions avant d'ouvrir le modal
+    if (!this.canExport) {
+      this.notificationService.warning(this.restrictionMessage);
+      return;
+    }
+
     this.showExportModal = true;
     // Réinitialiser les dates
     this.exportDateDebut = undefined;

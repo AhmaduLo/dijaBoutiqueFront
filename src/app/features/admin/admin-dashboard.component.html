@@ -481,6 +481,73 @@
         </div>
       </div>
 
+      <!-- SECTION PLAN D'ABONNEMENT -->
+      <div class="subscription-section" style="max-width: 800px; margin: 2rem auto 0; padding: 2.5rem; background: white; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); border: 2px solid #dbeafe;">
+        <div class="subscription-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 3px solid #f3f4f6;">
+          <h2 style="margin: 0; font-size: 1.75rem; color: #1f2937; font-weight: 700; display: flex; align-items: center; gap: 0.75rem;">
+            💎 Plan d'Abonnement
+          </h2>
+          <button class="btn btn-primary" (click)="openPlanModal()" style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);">
+            🚀 Changer de plan
+          </button>
+        </div>
+
+        <div class="current-plan-info" style="display: grid; gap: 1.5rem;">
+          <div class="plan-display" style="padding: 2rem; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; border: 2px solid #3b82f6;">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+              <div style="font-size: 3rem;">
+                {{ currentPlan === PlanAbonnement.BASIC ? '📊' : currentPlan === PlanAbonnement.PREMIUM || currentPlan === PlanAbonnement.PRO ? '⭐' : '👑' }}
+              </div>
+              <div>
+                <h3 style="margin: 0; font-size: 1.5rem; color: #1e40af; font-weight: 700;">{{ getPlanName(currentPlan) }}</h3>
+                <p style="margin: 0.5rem 0 0; color: #0369a1; font-size: 1rem;">{{ getPlanDescription(currentPlan) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="plan-features" style="padding: 1.5rem; background: #f9fafb; border-radius: 10px;">
+            <h4 style="margin: 0 0 1rem 0; color: #374151; font-size: 1.1rem; font-weight: 600;">✨ Fonctionnalités incluses :</h4>
+            <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem;">
+              <li style="display: flex; align-items: center; gap: 0.75rem; color: #4b5563; font-size: 0.95rem;">
+                <span style="color: #10b981; font-size: 1.2rem;">✓</span>
+                <span>Gestion des ventes, achats, dépenses</span>
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.75rem; color: #4b5563; font-size: 0.95rem;">
+                <span style="color: #10b981; font-size: 1.2rem;">✓</span>
+                <span>Dashboard avec statistiques</span>
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.75rem; color: #4b5563; font-size: 0.95rem;">
+                <span style="color: #10b981; font-size: 1.2rem;">✓</span>
+                <span>Rapports globaux (Excel/PDF)</span>
+              </li>
+              <li *ngIf="currentPlan === PlanAbonnement.PREMIUM || currentPlan === PlanAbonnement.PRO || currentPlan === PlanAbonnement.ENTREPRISE" style="display: flex; align-items: center; gap: 0.75rem; color: #4b5563; font-size: 0.95rem;">
+                <span style="color: #10b981; font-size: 1.2rem;">✓</span>
+                <span><strong>Exports individuels</strong> (achats, ventes, dépenses)</span>
+              </li>
+              <li *ngIf="currentPlan === PlanAbonnement.ENTREPRISE" style="display: flex; align-items: center; gap: 0.75rem; color: #4b5563; font-size: 0.95rem;">
+                <span style="color: #10b981; font-size: 1.2rem;">✓</span>
+                <span><strong>Support prioritaire 24/7</strong></span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="upgrade-prompt" *ngIf="currentPlan === PlanAbonnement.BASIC" style="padding: 1.5rem; background: linear-gradient(135deg, #fff9e6 0%, #fff3d4 100%); border: 2px solid #ff9800; border-radius: 12px;">
+            <div style="display: flex; align-items: start; gap: 1rem;">
+              <span style="font-size: 2rem;">🔒</span>
+              <div>
+                <strong style="display: block; color: #e65100; font-size: 1.1rem; margin-bottom: 0.5rem;">Débloquez toutes les fonctionnalités</strong>
+                <p style="margin: 0.5rem 0; color: #bf360c; font-size: 0.95rem; line-height: 1.5;">
+                  Passez au plan Premium ou Entreprise pour accéder aux exports individuels et bien plus encore.
+                </p>
+                <button (click)="openPlanModal()" style="margin-top: 1rem; background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                  🚀 Mettre à niveau maintenant
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ZONE DANGEREUSE: Suppression du compte -->
       <div class="danger-zone" style="max-width: 800px; margin: 2rem auto 0; padding: 2rem; background: white; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); border: 2px solid #fecaca;">
         <div class="danger-header" style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #fecaca;">
@@ -524,4 +591,142 @@
     </div>
   </div>
   <!-- FIN SECTION MON ENTREPRISE -->
+
+  <!-- MODAL CHANGEMENT DE PLAN -->
+  <div class="modal" *ngIf="showPlanModal" (click)="closePlanModal()" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px);">
+    <div class="modal-content" (click)="$event.stopPropagation()" style="background: white; border-radius: 20px; padding: 0; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); animation: slideUp 0.3s ease;">
+      <!-- Header du modal -->
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 2rem 2.5rem; border-bottom: 2px solid #f3f4f6; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <h2 style="margin: 0; font-size: 1.75rem; color: white; font-weight: 700; display: flex; align-items: center; gap: 0.75rem;">
+          🔒 Fonctionnalité Premium
+        </h2>
+        <button (click)="closePlanModal()" style="background: rgba(255,255,255,0.2); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; color: white; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">
+          ×
+        </button>
+      </div>
+
+      <!-- Corps du modal -->
+      <div class="modal-body" style="padding: 2.5rem;">
+        <!-- Message principal -->
+        <div style="text-align: center; margin-bottom: 2.5rem;">
+          <div style="font-size: 4rem; margin-bottom: 1rem;">🔒</div>
+          <h3 style="margin: 0 0 1rem 0; font-size: 1.5rem; color: #1f2937; font-weight: 700;">
+            Cette fonctionnalité est réservée aux plans Premium et Entreprise
+          </h3>
+          <p style="margin: 0; color: #6b7280; font-size: 1rem; line-height: 1.6;">
+            Votre plan actuel <strong>({{ getPlanName(currentPlan) }})</strong> ne permet pas d'accéder à cette fonctionnalité.
+          </p>
+        </div>
+
+        <!-- Comparaison des plans -->
+        <div style="display: grid; gap: 1.5rem; margin-bottom: 2rem;">
+          <!-- Plan BASIC -->
+          <div [class.current-plan-card]="isCurrentPlan(PlanAbonnement.BASIC)" style="border: 2px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; transition: all 0.3s ease; background: white;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 2rem;">📊</span>
+                <div>
+                  <h4 style="margin: 0; font-size: 1.25rem; color: #1f2937; font-weight: 700;">Plan Basic</h4>
+                  <p style="margin: 0.25rem 0 0; color: #6b7280; font-size: 0.9rem;">9.99€/mois</p>
+                </div>
+              </div>
+              <span *ngIf="isCurrentPlan(PlanAbonnement.BASIC)" style="padding: 0.25rem 0.75rem; background: #dbeafe; color: #1e40af; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Actuel</span>
+            </div>
+            <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem;">
+              <li style="display: flex; align-items: center; gap: 0.5rem; color: #4b5563; font-size: 0.9rem;">
+                <span style="color: #10b981;">✓</span>
+                Gestion complète
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem; color: #4b5563; font-size: 0.9rem;">
+                <span style="color: #10b981;">✓</span>
+                Rapports globaux
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem; color: #ef4444; font-size: 0.9rem;">
+                <span>✗</span>
+                Exports individuels
+              </li>
+            </ul>
+          </div>
+
+          <!-- Plan PREMIUM -->
+          <div [class.recommended]="!isCurrentPlan(PlanAbonnement.PREMIUM) && !isCurrentPlan(PlanAbonnement.PRO)" [class.current-plan-card]="isCurrentPlan(PlanAbonnement.PREMIUM) || isCurrentPlan(PlanAbonnement.PRO)" style="border: 2px solid #3b82f6; border-radius: 12px; padding: 1.5rem; position: relative; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
+            <div *ngIf="!isCurrentPlan(PlanAbonnement.PREMIUM) && !isCurrentPlan(PlanAbonnement.PRO)" style="position: absolute; top: -12px; right: 20px; background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; padding: 0.35rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);">
+              ⭐ RECOMMANDÉ
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 2rem;">⭐</span>
+                <div>
+                  <h4 style="margin: 0; font-size: 1.25rem; color: #1e40af; font-weight: 700;">Plan Premium</h4>
+                  <p style="margin: 0.25rem 0 0; color: #0369a1; font-size: 0.9rem;">29.99€/mois</p>
+                </div>
+              </div>
+              <span *ngIf="isCurrentPlan(PlanAbonnement.PREMIUM) || isCurrentPlan(PlanAbonnement.PRO)" style="padding: 0.25rem 0.75rem; background: #3b82f6; color: white; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Actuel</span>
+            </div>
+            <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem;">
+              <li style="display: flex; align-items: center; gap: 0.5rem; color: #1e40af; font-size: 0.9rem;">
+                <span style="color: #10b981;">✓</span>
+                <strong>Tout de Basic +</strong>
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem; color: #1e40af; font-size: 0.9rem;">
+                <span style="color: #10b981;">✓</span>
+                <strong>Exports individuels</strong>
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem; color: #1e40af; font-size: 0.9rem;">
+                <span style="color: #10b981;">✓</span>
+                Rapports avancés
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem; color: #1e40af; font-size: 0.9rem;">
+                <span style="color: #10b981;">✓</span>
+                Jusqu'à 10 utilisateurs
+              </li>
+            </ul>
+          </div>
+
+          <!-- Plan ENTREPRISE -->
+          <div [class.current-plan-card]="isCurrentPlan(PlanAbonnement.ENTREPRISE)" style="border: 2px solid #a855f7; border-radius: 12px; padding: 1.5rem; background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 2rem;">👑</span>
+                <div>
+                  <h4 style="margin: 0; font-size: 1.25rem; color: #7c3aed; font-weight: 700;">Plan Entreprise</h4>
+                  <p style="margin: 0.25rem 0 0; color: #8b5cf6; font-size: 0.9rem;">99.99€/mois</p>
+                </div>
+              </div>
+              <span *ngIf="isCurrentPlan(PlanAbonnement.ENTREPRISE)" style="padding: 0.25rem 0.75rem; background: #a855f7; color: white; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Actuel</span>
+            </div>
+            <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem;">
+              <li style="display: flex; align-items: center; gap: 0.5rem; color: #7c3aed; font-size: 0.9rem;">
+                <span style="color: #10b981;">✓</span>
+                <strong>Tout de Premium +</strong>
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem; color: #7c3aed; font-size: 0.9rem;">
+                <span style="color: #10b981;">✓</span>
+                <strong>Support 24/7</strong>
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem; color: #7c3aed; font-size: 0.9rem;">
+                <span style="color: #10b981;">✓</span>
+                Utilisateurs illimités
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem; color: #7c3aed; font-size: 0.9rem;">
+                <span style="color: #10b981;">✓</span>
+                Gestionnaire de compte dédié
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Bouton d'action -->
+        <div style="display: flex; gap: 1rem;">
+          <button (click)="closePlanModal()" style="flex: 1; padding: 1rem; background: #f3f4f6; color: #6b7280; border: none; border-radius: 10px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s ease;">
+            Annuler
+          </button>
+          <a [routerLink]="['/subscription']" (click)="closePlanModal()" style="flex: 2; padding: 1rem; background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 16px rgba(255, 152, 0, 0.3);">
+            🚀 Mettre à niveau mon plan
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- FIN MODAL -->
 </div>
