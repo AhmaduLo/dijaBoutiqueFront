@@ -5,6 +5,7 @@ export interface Vente {
   id?: number;
   quantite: number;
   nomProduit: string;
+  photoUrl?: string; // URL de la photo du produit (optionnel)
   prixUnitaire: number;
   prixTotal: number;
   dateVente: string; // Format: YYYY-MM-DD

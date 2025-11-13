@@ -13,6 +13,7 @@ export enum StatutStock {
  */
 export interface StockDto {
   nomProduit: string;
+  photoUrl?: string; // URL de la photo du produit (optionnel)
   quantiteAchetee: number;
   quantiteVendue: number;
   stockDisponible: number;

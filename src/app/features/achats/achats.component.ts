@@ -15,6 +15,9 @@ import { ExportService } from '../../core/services/export.service';
 import { TenantService } from '../../core/services/tenant.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Tenant } from '../../core/models/tenant.model';
+import { ImageUploadComponent } from '../../shared/components/image-upload/image-upload.component';
+import { FileService } from '../../core/services/file.service';
+import { ImageViewerModalComponent } from '../../shared/components/image-viewer-modal/image-viewer-modal.component';
 
 /**
  * Composant de gestion des achats de stock
@@ -22,7 +25,7 @@ import { Tenant } from '../../core/models/tenant.model';
 @Component({
   selector: 'app-achats',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyEurPipe],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyEurPipe, ImageUploadComponent, ImageViewerModalComponent],
   template: `
     <div class="achats">
       <div class="page-header">
@@ -133,6 +136,19 @@ import { Tenant } from '../../core/models/tenant.model';
               </div>
             </div>
 
+            <!-- Photo du produit -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+              <label>Photo du produit (optionnel)</label>
+              <app-image-upload
+                formControlName="photoUrl"
+                [uploadType]="'achat'"
+                [altText]="achatForm.get('nomProduit')?.value || 'Photo du produit'"
+              ></app-image-upload>
+              <small style="color: #666; display: block; margin-top: 0.5rem;">
+                💡 Ajoutez une photo pour identifier rapidement le produit
+              </small>
+            </div>
+
             <div class="form-row">
               <div class="form-group">
                 <label>Quantité *</label>
@@ -209,6 +225,7 @@ import { Tenant } from '../../core/models/tenant.model';
         <table *ngIf="filteredAchats.length > 0">
           <thead>
             <tr>
+              <th>Photo</th>
               <th>Date</th>
               <th>Produit</th>
               <th>Fournisseur</th>
@@ -221,6 +238,15 @@ import { Tenant } from '../../core/models/tenant.model';
           </thead>
           <tbody>
             <tr *ngFor="let achat of filteredAchats">
+              <td>
+                <img
+                  [src]="getPhotoUrl(achat.photoUrl)"
+                  [alt]="achat.nomProduit"
+                  class="product-thumbnail clickable"
+                  (click)="openImageViewer(achat.photoUrl, achat.nomProduit)"
+                  title="Cliquer pour agrandir"
+                />
+              </td>
               <td>{{ formatDate(achat.dateAchat) }}</td>
               <td class="bold">{{ achat.nomProduit }}</td>
               <td>{{ achat.fournisseur }}</td>
@@ -269,6 +295,14 @@ import { Tenant } from '../../core/models/tenant.model';
         </div>
       </div>
     </div>
+
+    <!-- Modal de visualisation d'image -->
+    <app-image-viewer-modal
+      [isOpen]="showImageViewer"
+      [imageUrl]="selectedImageUrl"
+      [altText]="selectedImageAlt"
+      (closed)="closeImageViewer()">
+    </app-image-viewer-modal>
   `,
   styleUrls: ['./achats.component.scss']
 })
@@ -296,6 +330,11 @@ export class AchatsComponent implements OnInit {
   selectedCurrency?: Currency;
   defaultCurrency?: Currency;
 
+  // Image viewer
+  showImageViewer = false;
+  selectedImageUrl = '';
+  selectedImageAlt = '';
+
   constructor(
     private fb: FormBuilder,
     private achatService: AchatService,
@@ -305,11 +344,13 @@ export class AchatsComponent implements OnInit {
     private confirmService: ConfirmService,
     private exportService: ExportService,
     private tenantService: TenantService,
-    private authService: AuthService
+    private authService: AuthService,
+    private fileService: FileService
   ) {
     this.achatForm = this.fb.group({
       nomProduit: ['', Validators.required],
       nouveauProduit: [''],
+      photoUrl: [null], // Photo optionnelle
       fournisseur: [''],
       quantite: [1, [Validators.required, Validators.min(1)]],
       prixUnitaire: [0, [Validators.required, Validators.min(0)]],
@@ -440,6 +481,7 @@ export class AchatsComponent implements OnInit {
     this.achatForm.reset({
       nomProduit: '',
       nouveauProduit: '',
+      photoUrl: null,
       fournisseur: '',
       quantite: 1,
       prixUnitaire: 0,
@@ -472,15 +514,28 @@ export class AchatsComponent implements OnInit {
   }
 
   onSubmit(): void {
+    console.log('🚀 onSubmit appelé');
+    console.log('📋 Formulaire valide?', this.achatForm.valid);
+    console.log('📋 Valeurs du formulaire:', this.achatForm.value);
+
     if (this.achatForm.invalid) {
+      console.log('❌ Formulaire invalide, champs avec erreurs:');
       Object.keys(this.achatForm.controls).forEach(key => {
-        this.achatForm.get(key)?.markAsTouched();
+        const control = this.achatForm.get(key);
+        if (control?.invalid) {
+          console.log(`  - ${key}:`, control.errors);
+        }
+        control?.markAsTouched();
       });
       return;
     }
 
     this.isSubmitting = true;
     const formValue = this.achatForm.getRawValue();
+
+    // DEBUG: Afficher le photoUrl pour vérifier
+    console.log('📸 FormValue photoUrl:', formValue.photoUrl);
+    console.log('📸 FormValue complet:', formValue);
 
     // Gérer le cas du nouveau produit
     let nomProduitFinal = formValue.nomProduit;
@@ -490,6 +545,7 @@ export class AchatsComponent implements OnInit {
 
     const achat: Achat = {
       nomProduit: nomProduitFinal,
+      photoUrl: formValue.photoUrl || undefined,
       fournisseur: formValue.fournisseur?.trim() || 'Fournisseur',
       quantite: formValue.quantite,
       prixUnitaire: formValue.prixUnitaire,
@@ -500,6 +556,9 @@ export class AchatsComponent implements OnInit {
       deviseCode: this.selectedCurrency?.code,
       deviseSymbole: this.selectedCurrency?.symbole
     };
+
+    // DEBUG: Afficher l'objet achat avant envoi
+    console.log('📦 Objet Achat à envoyer:', achat);
 
     const operation = this.isEditing && this.currentAchatId
       ? this.achatService.update(this.currentAchatId, achat)
@@ -564,6 +623,33 @@ export class AchatsComponent implements OnInit {
 
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('fr-FR');
+  }
+
+  /**
+   * Retourne l'URL de la photo ou le placeholder par défaut
+   */
+  getPhotoUrl(photoUrl: string | null | undefined): string {
+    return this.fileService.getPhotoUrl(photoUrl || null);
+  }
+
+  /**
+   * Ouvre la modal de visualisation d'image
+   */
+  openImageViewer(photoUrl: string | null | undefined, altText: string): void {
+    if (photoUrl) {
+      this.selectedImageUrl = this.getPhotoUrl(photoUrl);
+      this.selectedImageAlt = altText;
+      this.showImageViewer = true;
+    }
+  }
+
+  /**
+   * Ferme la modal de visualisation d'image
+   */
+  closeImageViewer(): void {
+    this.showImageViewer = false;
+    this.selectedImageUrl = '';
+    this.selectedImageAlt = '';
   }
 
   /**

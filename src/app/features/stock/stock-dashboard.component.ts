@@ -8,6 +8,8 @@ import { CurrencyEurPipe } from '../../shared/pipes/currency-eur.pipe';
 import { CurrencyService } from '../../core/services/currency.service';
 import { Currency } from '../../core/models/currency.model';
 import { AuthService } from '../../core/services/auth.service';
+import { FileService } from '../../core/services/file.service';
+import { ImageViewerModalComponent } from '../../shared/components/image-viewer-modal/image-viewer-modal.component';
 
 /**
  * Composant du dashboard de gestion de stock
@@ -15,7 +17,7 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-stock-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyEurPipe],
+  imports: [CommonModule, FormsModule, CurrencyEurPipe, ImageViewerModalComponent],
   template: `
     <div class="stock-dashboard">
       <div class="page-header">
@@ -165,6 +167,7 @@ import { AuthService } from '../../core/services/auth.service';
         <table *ngIf="filteredStocks.length > 0 && isAdminOrGerant()">
           <thead>
             <tr>
+              <th>Photo</th>
               <th>Produit</th>
               <th>Acheté</th>
               <th>Vendu</th>
@@ -179,6 +182,15 @@ import { AuthService } from '../../core/services/auth.service';
           </thead>
           <tbody>
             <tr *ngFor="let stock of filteredStocks" [ngClass]="'row-' + stock.statut.toLowerCase()">
+              <td>
+                <img
+                  [src]="getPhotoUrl(stock.photoUrl)"
+                  [alt]="stock.nomProduit"
+                  class="product-thumbnail clickable"
+                  (click)="openImageViewer(stock.photoUrl, stock.nomProduit)"
+                  title="Cliquer pour agrandir"
+                />
+              </td>
               <td class="bold">{{ stock.nomProduit }}</td>
               <td>{{ stock.quantiteAchetee }}</td>
               <td>{{ stock.quantiteVendue }}</td>
@@ -214,7 +226,7 @@ import { AuthService } from '../../core/services/auth.service';
           </tbody>
           <tfoot>
             <tr class="total-row">
-              <td colspan="3" class="text-right"><strong>Totaux :</strong></td>
+              <td colspan="4" class="text-right"><strong>Totaux :</strong></td>
               <td class="bold">{{ calculateTotalStock() }}</td>
               <td colspan="2"></td>
               <td class="bold">{{ calculateTotalValue() | number:'1.0-2':'fr-FR' }} <span class="currency-symbol">{{ defaultCurrency?.symbole || 'CFA' }}</span></td>
@@ -228,6 +240,7 @@ import { AuthService } from '../../core/services/auth.service';
         <table *ngIf="filteredStocks.length > 0 && !isAdminOrGerant()">
           <thead>
             <tr>
+              <th>Photo</th>
               <th>Produit</th>
               <th>Stock</th>
               <th>Statut</th>
@@ -235,6 +248,15 @@ import { AuthService } from '../../core/services/auth.service';
           </thead>
           <tbody>
             <tr *ngFor="let stock of filteredStocks" [ngClass]="'row-' + stock.statut.toLowerCase()">
+              <td>
+                <img
+                  [src]="getPhotoUrl(stock.photoUrl)"
+                  [alt]="stock.nomProduit"
+                  class="product-thumbnail clickable"
+                  (click)="openImageViewer(stock.photoUrl, stock.nomProduit)"
+                  title="Cliquer pour agrandir"
+                />
+              </td>
               <td class="bold">{{ stock.nomProduit }}</td>
               <td>
                 <span class="stock-quantity" [style.color]="getStatutColor(stock.statut)">
@@ -259,7 +281,7 @@ import { AuthService } from '../../core/services/auth.service';
           </tbody>
           <tfoot>
             <tr class="total-row">
-              <td class="text-right"><strong>Total :</strong></td>
+              <td colspan="2" class="text-right"><strong>Total :</strong></td>
               <td class="bold">{{ calculateTotalStock() }}</td>
               <td></td>
             </tr>
@@ -274,6 +296,14 @@ import { AuthService } from '../../core/services/auth.service';
         </div>
       </div>
     </div>
+
+    <!-- Modal de visualisation d'image -->
+    <app-image-viewer-modal
+      [isOpen]="showImageViewer"
+      [imageUrl]="selectedImageUrl"
+      [altText]="selectedImageAlt"
+      (closed)="closeImageViewer()">
+    </app-image-viewer-modal>
   `,
   styleUrls: ['./stock-dashboard.component.scss']
 })
@@ -291,11 +321,17 @@ export class StockDashboardComponent implements OnInit {
   // Devise
   defaultCurrency?: Currency;
 
+  // Image viewer
+  showImageViewer = false;
+  selectedImageUrl = '';
+  selectedImageAlt = '';
+
   constructor(
     private stockService: StockService,
     private notificationService: NotificationService,
     private currencyService: CurrencyService,
-    private authService: AuthService
+    private authService: AuthService,
+    private fileService: FileService
   ) { }
 
   ngOnInit(): void {
@@ -438,5 +474,32 @@ export class StockDashboardComponent implements OnInit {
    */
   isAdminOrGerant(): boolean {
     return this.authService.isAdminOrGerant();
+  }
+
+  /**
+   * Retourne l'URL de la photo ou le placeholder par défaut
+   */
+  getPhotoUrl(photoUrl: string | null | undefined): string {
+    return this.fileService.getPhotoUrl(photoUrl || null);
+  }
+
+  /**
+   * Ouvre la modal de visualisation d'image
+   */
+  openImageViewer(photoUrl: string | null | undefined, altText: string): void {
+    if (photoUrl) {
+      this.selectedImageUrl = this.getPhotoUrl(photoUrl);
+      this.selectedImageAlt = altText;
+      this.showImageViewer = true;
+    }
+  }
+
+  /**
+   * Ferme la modal de visualisation d'image
+   */
+  closeImageViewer(): void {
+    this.showImageViewer = false;
+    this.selectedImageUrl = '';
+    this.selectedImageAlt = '';
   }
 }

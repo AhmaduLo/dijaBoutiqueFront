@@ -18,11 +18,13 @@ import { ProduitPourVente } from '../../core/models/produit-pour-vente.model';
 import { FactureNumeroService } from '../../core/services/facture-numero.service';
 import { TenantService } from '../../core/services/tenant.service';
 import { Tenant } from '../../core/models/tenant.model';
+import { FileService } from '../../core/services/file.service';
+import { ImageViewerModalComponent } from '../../shared/components/image-viewer-modal/image-viewer-modal.component';
 
 @Component({
   selector: 'app-ventes',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyEurPipe],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CurrencyEurPipe, ImageViewerModalComponent],
   template: `
     <div class="ventes">
       <div class="page-header">
@@ -171,7 +173,21 @@ import { Tenant } from '../../core/models/tenant.model';
                         </div>
                       </div>
                     </div>
+                  </div>
 
+                  <!-- Photo du produit (affichage uniquement) -->
+                  <div class="form-group" style="margin-bottom: 1.5rem;" *ngIf="produits.at(i).get('photoUrl')?.value">
+                    <label>Photo du produit</label>
+                    <div class="product-photo-display">
+                      <img
+                        [src]="getPhotoUrl(produits.at(i).get('photoUrl')?.value)"
+                        [alt]="searchTermsProduits[i] || 'Photo du produit'"
+                        class="product-photo"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="form-row">
                     <div class="form-group">
                       <label>Quantité *</label>
                       <input
@@ -245,6 +261,7 @@ import { Tenant } from '../../core/models/tenant.model';
         <table *ngIf="filteredVentes.length > 0">
           <thead>
             <tr>
+              <th>Photo</th>
               <th>Date</th>
               <th>Produit</th>
               <th>Client</th>
@@ -257,6 +274,15 @@ import { Tenant } from '../../core/models/tenant.model';
           </thead>
           <tbody>
             <tr *ngFor="let vente of filteredVentes">
+              <td>
+                <img
+                  [src]="getPhotoUrl(vente.photoUrl)"
+                  [alt]="vente.nomProduit"
+                  class="product-thumbnail clickable"
+                  (click)="openImageViewer(vente.photoUrl, vente.nomProduit)"
+                  title="Cliquer pour agrandir"
+                />
+              </td>
               <td>{{ formatDate(vente.dateVente) }}</td>
               <td class="bold">{{ vente.nomProduit }}</td>
               <td>{{ vente.client }}</td>
@@ -299,6 +325,14 @@ import { Tenant } from '../../core/models/tenant.model';
         </div>
       </div>
     </div>
+
+    <!-- Modal de visualisation d'image -->
+    <app-image-viewer-modal
+      [isOpen]="showImageViewer"
+      [imageUrl]="selectedImageUrl"
+      [altText]="selectedImageAlt"
+      (closed)="closeImageViewer()">
+    </app-image-viewer-modal>
   `,
   styleUrls: ['../achats/achats.component.scss', './ventes.component.scss']
 })
@@ -343,6 +377,11 @@ export class VentesComponent implements OnInit {
   produitsFiltre: StockDto[][] = []; // Produits filtrés par ligne
   showDropdownProduit: boolean[] = []; // Affichage du dropdown par ligne
 
+  // Image viewer
+  showImageViewer = false;
+  selectedImageUrl = '';
+  selectedImageAlt = '';
+
   constructor(
     private fb: FormBuilder,
     private venteService: VenteService,
@@ -354,7 +393,8 @@ export class VentesComponent implements OnInit {
     private exportService: ExportService,
     private authService: AuthService,
     private factureNumeroService: FactureNumeroService,
-    private tenantService: TenantService
+    private tenantService: TenantService,
+    private fileService: FileService
   ) {
     this.venteForm = this.fb.group({
       client: [''],
@@ -380,6 +420,7 @@ export class VentesComponent implements OnInit {
   creerLigneProduit(): FormGroup {
     return this.fb.group({
       nomProduit: ['', Validators.required],
+      photoUrl: [null], // Photo optionnelle
       quantite: [1, [Validators.required, Validators.min(1)]],
       prixUnitaire: [0, [Validators.required, Validators.min(0)]],
       prixTotal: [{ value: 0, disabled: true }]
@@ -547,6 +588,11 @@ export class VentesComponent implements OnInit {
           });
           this.calculerTotalLigne(index);
         }
+
+        // Réinitialiser la photo avant de charger la nouvelle
+        ligneForm.patchValue({ photoUrl: null });
+        // Récupérer la photo du produit depuis les achats
+        this.chargerPhotoDepuisAchats(index, nomProduit);
       }
     }
   }
@@ -743,6 +789,40 @@ export class VentesComponent implements OnInit {
     const dateVente = formValue['dateVente'];
     const produits = formValue['produits'];
 
+    // Mode édition : mettre à jour la vente existante
+    if (this.isEditing && this.currentVenteId) {
+      const produit = produits[0]; // On ne peut modifier qu'un seul produit à la fois
+      const venteAModifier: Vente = {
+        id: this.currentVenteId,
+        nomProduit: produit['nomProduit'],
+        client: client,
+        quantite: Number(produit['quantite']),
+        prixUnitaire: Number(produit['prixUnitaire']),
+        prixTotal: Number(produit['quantite']) * Number(produit['prixUnitaire']),
+        dateVente: dateVente,
+        photoUrl: produit['photoUrl'] || null,
+        deviseId: this.selectedCurrency?.id,
+        deviseCode: this.selectedCurrency?.code,
+        deviseSymbole: this.selectedCurrency?.symbole
+      };
+
+      this.venteService.update(this.currentVenteId, venteAModifier).subscribe({
+        next: () => {
+          this.notificationService.success('Vente modifiée avec succès');
+          this.closeForm();
+          this.loadVentes();
+          this.loadProduitsDisponibles();
+          this.isSubmitting = false;
+        },
+        error: (error) => {
+          this.notificationService.error(error.message || 'Erreur lors de la modification');
+          this.isSubmitting = false;
+        }
+      });
+      return;
+    }
+
+    // Mode création : créer de nouvelles ventes
     // Sauvegarder les données du client pour la facture
     this.derniereVenteData = {
       client,
@@ -767,6 +847,7 @@ export class VentesComponent implements OnInit {
       prixUnitaire: Number(produit['prixUnitaire']),
       prixTotal: Number(produit['quantite']) * Number(produit['prixUnitaire']),
       dateVente: dateVente,
+      photoUrl: produit['photoUrl'] || null, // Inclure la photo du produit
       deviseId: this.selectedCurrency?.id,
       deviseCode: this.selectedCurrency?.code,
       deviseSymbole: this.selectedCurrency?.symbole
@@ -994,7 +1075,8 @@ export class VentesComponent implements OnInit {
       nomProduit: vente.nomProduit,
       quantite: vente.quantite,
       prixUnitaire: vente.prixUnitaire,
-      prixTotal: vente.prixTotal
+      prixTotal: vente.prixTotal,
+      photoUrl: vente.photoUrl || null // Inclure la photo
     });
     this.produits.push(produitGroup);
 
@@ -1036,6 +1118,70 @@ export class VentesComponent implements OnInit {
 
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('fr-FR');
+  }
+
+  /**
+   * Retourne l'URL de la photo ou le placeholder par défaut
+   */
+  getPhotoUrl(photoUrl: string | null | undefined): string {
+    return this.fileService.getPhotoUrl(photoUrl || null);
+  }
+
+  /**
+   * Ouvre la modal de visualisation d'image
+   */
+  openImageViewer(photoUrl: string | null | undefined, altText: string): void {
+    if (photoUrl) {
+      this.selectedImageUrl = this.getPhotoUrl(photoUrl);
+      this.selectedImageAlt = altText;
+      this.showImageViewer = true;
+    }
+  }
+
+  /**
+   * Ferme la modal de visualisation d'image
+   */
+  closeImageViewer(): void {
+    this.showImageViewer = false;
+    this.selectedImageUrl = '';
+    this.selectedImageAlt = '';
+  }
+
+  /**
+   * Charge la photo d'un produit depuis les achats
+   */
+  chargerPhotoDepuisAchats(index: number, nomProduit: string): void {
+    // Récupérer les achats qui correspondent au produit
+    this.achatService.getAll().subscribe({
+      next: (achats) => {
+        // Trouver le dernier achat du produit qui a une photo
+        const achatAvecPhoto = achats
+          .filter(achat => achat.nomProduit === nomProduit && achat.photoUrl)
+          .sort((a, b) => {
+            // Trier par date décroissante pour avoir le plus récent en premier
+            const dateA = new Date(a.dateAchat).getTime();
+            const dateB = new Date(b.dateAchat).getTime();
+            return dateB - dateA;
+          })[0];
+
+        // Si on a trouvé un achat avec photo, mettre à jour le formulaire
+        if (achatAvecPhoto && achatAvecPhoto.photoUrl) {
+          const ligneForm = this.produits.at(index) as FormGroup;
+          ligneForm.patchValue({
+            photoUrl: achatAvecPhoto.photoUrl
+          });
+        }
+      },
+      error: (error) => {
+        // Si erreur 403 (Forbidden), l'utilisateur n'a pas accès aux achats (employé)
+        // On ignore silencieusement l'erreur car c'est normal pour les employés
+        if (error.status === 403) {
+          console.log('Accès aux achats non autorisé (utilisateur employé) - photos non disponibles');
+        } else {
+          console.error('Erreur lors du chargement de la photo:', error);
+        }
+      }
+    });
   }
 
   openExportModal(): void {
