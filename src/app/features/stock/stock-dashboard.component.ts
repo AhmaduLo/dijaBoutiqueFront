@@ -9,6 +9,8 @@ import { CurrencyService } from '../../core/services/currency.service';
 import { Currency } from '../../core/models/currency.model';
 import { AuthService } from '../../core/services/auth.service';
 import { FileService } from '../../core/services/file.service';
+import { PaymentService } from '../../core/services/payment.service';
+import { PlanAbonnement } from '../../core/models/payment.model';
 import { ImageViewerModalComponent } from '../../shared/components/image-viewer-modal/image-viewer-modal.component';
 
 /**
@@ -167,7 +169,7 @@ import { ImageViewerModalComponent } from '../../shared/components/image-viewer-
         <table *ngIf="filteredStocks.length > 0 && isAdminOrGerant()">
           <thead>
             <tr>
-              <th>Photo</th>
+              <th *ngIf="canUsePhotos()">Photo</th>
               <th>Produit</th>
               <th>Acheté</th>
               <th>Vendu</th>
@@ -182,7 +184,7 @@ import { ImageViewerModalComponent } from '../../shared/components/image-viewer-
           </thead>
           <tbody>
             <tr *ngFor="let stock of filteredStocks" [ngClass]="'row-' + stock.statut.toLowerCase()">
-              <td>
+              <td *ngIf="canUsePhotos()">
                 <img
                   [src]="getPhotoUrl(stock.photoUrl)"
                   [alt]="stock.nomProduit"
@@ -226,7 +228,7 @@ import { ImageViewerModalComponent } from '../../shared/components/image-viewer-
           </tbody>
           <tfoot>
             <tr class="total-row">
-              <td colspan="4" class="text-right"><strong>Totaux :</strong></td>
+              <td [attr.colspan]="canUsePhotos() ? 4 : 3" class="text-right"><strong>Totaux :</strong></td>
               <td class="bold">{{ calculateTotalStock() }}</td>
               <td colspan="2"></td>
               <td class="bold">{{ calculateTotalValue() | number:'1.0-2':'fr-FR' }} <span class="currency-symbol">{{ defaultCurrency?.symbole || 'CFA' }}</span></td>
@@ -240,7 +242,7 @@ import { ImageViewerModalComponent } from '../../shared/components/image-viewer-
         <table *ngIf="filteredStocks.length > 0 && !isAdminOrGerant()">
           <thead>
             <tr>
-              <th>Photo</th>
+              <th *ngIf="canUsePhotos()">Photo</th>
               <th>Produit</th>
               <th>Stock</th>
               <th>Statut</th>
@@ -248,7 +250,7 @@ import { ImageViewerModalComponent } from '../../shared/components/image-viewer-
           </thead>
           <tbody>
             <tr *ngFor="let stock of filteredStocks" [ngClass]="'row-' + stock.statut.toLowerCase()">
-              <td>
+              <td *ngIf="canUsePhotos()">
                 <img
                   [src]="getPhotoUrl(stock.photoUrl)"
                   [alt]="stock.nomProduit"
@@ -281,7 +283,7 @@ import { ImageViewerModalComponent } from '../../shared/components/image-viewer-
           </tbody>
           <tfoot>
             <tr class="total-row">
-              <td colspan="2" class="text-right"><strong>Total :</strong></td>
+              <td [attr.colspan]="canUsePhotos() ? 2 : 1" class="text-right"><strong>Total :</strong></td>
               <td class="bold">{{ calculateTotalStock() }}</td>
               <td></td>
             </tr>
@@ -331,7 +333,8 @@ export class StockDashboardComponent implements OnInit {
     private notificationService: NotificationService,
     private currencyService: CurrencyService,
     private authService: AuthService,
-    private fileService: FileService
+    private fileService: FileService,
+    private paymentService: PaymentService
   ) { }
 
   ngOnInit(): void {
@@ -501,5 +504,13 @@ export class StockDashboardComponent implements OnInit {
     this.showImageViewer = false;
     this.selectedImageUrl = '';
     this.selectedImageAlt = '';
+  }
+
+  /**
+   * Vérifie si le plan actuel permet l'utilisation des photos
+   */
+  canUsePhotos(): boolean {
+    const currentPlan = this.paymentService.getCurrentPlan();
+    return currentPlan === PlanAbonnement.ENTREPRISE;
   }
 }

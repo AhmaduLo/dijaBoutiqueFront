@@ -17,6 +17,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { Tenant } from '../../core/models/tenant.model';
 import { PlanRestrictionService } from '../../core/services/plan-restriction.service';
 import { PaymentService } from '../../core/services/payment.service';
+import { PlanAbonnement } from '../../core/models/payment.model';
 import { Router, RouterModule } from '@angular/router';
 import { ImageUploadComponent } from '../../shared/components/image-upload/image-upload.component';
 import { FileService } from '../../core/services/file.service';
@@ -142,8 +143,8 @@ import { ImageViewerModalComponent } from '../../shared/components/image-viewer-
               </div>
             </div>
 
-            <!-- Photo du produit -->
-            <div class="form-group" style="margin-bottom: 1.5rem;">
+            <!-- Photo du produit - Uniquement pour plan ENTREPRISE -->
+            <div class="form-group" style="margin-bottom: 1.5rem;" *ngIf="canUsePhotos()">
               <label>Photo du produit (optionnel)</label>
               <app-image-upload
                 formControlName="photoUrl"
@@ -231,7 +232,7 @@ import { ImageViewerModalComponent } from '../../shared/components/image-viewer-
         <table *ngIf="filteredAchats.length > 0">
           <thead>
             <tr>
-              <th>Photo</th>
+              <th *ngIf="canUsePhotos()">Photo</th>
               <th>Date</th>
               <th>Produit</th>
               <th>Fournisseur</th>
@@ -244,7 +245,7 @@ import { ImageViewerModalComponent } from '../../shared/components/image-viewer-
           </thead>
           <tbody>
             <tr *ngFor="let achat of filteredAchats">
-              <td>
+              <td *ngIf="canUsePhotos()">
                 <img
                   [src]="getPhotoUrl(achat.photoUrl)"
                   [alt]="achat.nomProduit"
@@ -280,7 +281,7 @@ import { ImageViewerModalComponent } from '../../shared/components/image-viewer-
           </tbody>
           <tfoot>
             <tr class="total-row">
-              <td colspan="5" class="text-right"><strong>Total ({{ defaultCurrency?.symbole || 'CFA' }}) :</strong></td>
+              <td [attr.colspan]="canUsePhotos() ? 5 : 4" class="text-right"><strong>Total ({{ defaultCurrency?.symbole || 'CFA' }}) :</strong></td>
               <td class="bold" colspan="2">
                 {{ calculateTotal() | number:'1.0-2':'fr-FR' }}
                 <span class="currency-badge-small">{{ defaultCurrency?.symbole || 'CFA' }}</span>
@@ -1002,5 +1003,13 @@ export class AchatsComponent implements OnInit {
         this.closeExportModal();
       }
     });
+  }
+
+  /**
+   * Vérifie si le plan actuel permet l'utilisation des photos
+   */
+  canUsePhotos(): boolean {
+    const currentPlan = this.paymentService.getCurrentPlan();
+    return currentPlan === PlanAbonnement.ENTREPRISE;
   }
 }

@@ -20,6 +20,7 @@ import { TenantService } from '../../core/services/tenant.service';
 import { Tenant } from '../../core/models/tenant.model';
 import { PlanRestrictionService } from '../../core/services/plan-restriction.service';
 import { PaymentService } from '../../core/services/payment.service';
+import { PlanAbonnement } from '../../core/models/payment.model';
 import { Router, RouterModule } from '@angular/router';
 import { FileService } from '../../core/services/file.service';
 import { ImageViewerModalComponent } from '../../shared/components/image-viewer-modal/image-viewer-modal.component';
@@ -264,7 +265,7 @@ import { ImageViewerModalComponent } from '../../shared/components/image-viewer-
         <table *ngIf="filteredVentes.length > 0">
           <thead>
             <tr>
-              <th>Photo</th>
+              <th *ngIf="canUsePhotos()">Photo</th>
               <th>Date</th>
               <th>Produit</th>
               <th>Client</th>
@@ -277,7 +278,7 @@ import { ImageViewerModalComponent } from '../../shared/components/image-viewer-
           </thead>
           <tbody>
             <tr *ngFor="let vente of filteredVentes">
-              <td>
+              <td *ngIf="canUsePhotos()">
                 <img
                   [src]="getPhotoUrl(vente.photoUrl)"
                   [alt]="vente.nomProduit"
@@ -309,7 +310,7 @@ import { ImageViewerModalComponent } from '../../shared/components/image-viewer-
           </tbody>
           <tfoot>
             <tr class="total-row">
-              <td [attr.colspan]="isAdminOrGerant() ? 5 : 5" class="text-right"><strong>Total :</strong></td>
+              <td [attr.colspan]="(canUsePhotos() ? 1 : 0) + (isAdminOrGerant() ? 5 : 4)" class="text-right"><strong>Total :</strong></td>
               <td class="bold">
                 {{ calculateTotal() | number:'1.0-2':'fr-FR' }}
                 <span class="currency-badge">{{ defaultCurrency?.symbole || 'CFA' }}</span>
@@ -1538,5 +1539,13 @@ export class VentesComponent implements OnInit {
    */
   isAdminOrGerant(): boolean {
     return this.authService.isAdminOrGerant();
+  }
+
+  /**
+   * Vérifie si le plan actuel permet l'utilisation des photos
+   */
+  canUsePhotos(): boolean {
+    const currentPlan = this.paymentService.getCurrentPlan();
+    return currentPlan === PlanAbonnement.ENTREPRISE;
   }
 }
