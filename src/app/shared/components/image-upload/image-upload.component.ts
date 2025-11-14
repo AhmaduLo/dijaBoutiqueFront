@@ -48,6 +48,7 @@ import { NotificationService } from '../../../core/services/notification.service
           #fileInput
           type="file"
           accept="image/jpeg,image/jpg,image/png,image/webp"
+          capture="environment"
           (change)="onFileSelected($event)"
           class="file-input"
           [disabled]="disabled"
@@ -78,6 +79,7 @@ import { NotificationService } from '../../../core/services/notification.service
         #fileInput
         type="file"
         accept="image/jpeg,image/jpg,image/png,image/webp"
+        capture="environment"
         (change)="onFileSelected($event)"
         class="file-input"
         [disabled]="disabled"
