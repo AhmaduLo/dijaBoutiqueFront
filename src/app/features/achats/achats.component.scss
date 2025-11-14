@@ -195,6 +195,31 @@
   }
 }
 
+.product-thumbnail {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  background: #f9fafb;
+  display: block;
+
+  &.clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: scale(1.1);
+      border-color: #1e40af;
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+    }
+
+    &:active {
+      transform: scale(1.05);
+    }
+  }
+}
+
 // Tablettes et écrans moyens
 @media (max-width: 1200px) {
   .achats {

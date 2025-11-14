@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#f3f4f6"/>
+  <g opacity="0.3">
+    <path d="M70 80h60v40H70z" fill="#9ca3af"/>
+    <circle cx="85" cy="95" r="8" fill="#9ca3af"/>
+    <path d="M70 120l20-20 15 15 25-25v30H70z" fill="#6b7280"/>
+  </g>
+  <text x="100" y="170" text-anchor="middle" font-family="Arial" font-size="14" fill="#6b7280">
+    Aucune image
+  </text>
+</svg>

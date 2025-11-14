@@ -5,6 +5,7 @@ export interface Achat {
   id?: number;
   quantite: number;
   nomProduit: string;
+  photoUrl?: string; // URL de la photo du produit (optionnel)
   prixUnitaire: number;
   prixTotal: number;
   prixVenteSuggere?: number; // Prix de vente suggéré pour pré-remplir les ventes
